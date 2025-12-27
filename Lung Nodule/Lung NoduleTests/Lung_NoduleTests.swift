@@ -10,6 +10,7 @@ import Testing
 
 // MARK: - Fleischner Calculator Tests
 
+@MainActor
 struct FleischnerCalculatorTests {
     
     // MARK: Single Solid Nodule Tests
@@ -173,6 +174,7 @@ struct FleischnerCalculatorTests {
 
 // MARK: - Fleischner Edge Cases (from nodule_edge_cases CSV)
 
+@MainActor
 struct FleischnerEdgeCaseTests {
     
     // MARK: - F001-F005: Solid Nodule Rounding Threshold Tests
@@ -509,6 +511,7 @@ struct FleischnerEdgeCaseTests {
 
 // MARK: - Lung-RADS Calculator Tests
 
+@MainActor
 struct LungRADSCalculatorTests {
     
     // MARK: Category 0 Tests
@@ -876,6 +879,7 @@ struct LungRADSCalculatorTests {
 
 // MARK: - Lung-RADS Edge Cases (from nodule_edge_cases CSV)
 
+@MainActor
 struct LungRADSEdgeCaseTests {
     
     // MARK: - L001-L009: Category 0/1 Baseline Tests

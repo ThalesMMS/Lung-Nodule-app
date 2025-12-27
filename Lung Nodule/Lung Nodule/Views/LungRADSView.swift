@@ -286,6 +286,14 @@ struct LungRADSResultCard: View {
             Text(result.category.description)
                 .font(.system(size: 20, weight: .medium))
                 .foregroundColor(Color(red: 0.2, green: 0.8, blue: 0.2))
+
+            if let notes = result.additionalNotes, !notes.isEmpty {
+                Text(notes)
+                    .font(.footnote)
+                    .foregroundColor(.gray)
+                    .multilineTextAlignment(.center)
+                    .padding(.top, 4)
+            }
             
             Button(action: onSModifierTap) {
                 HStack {
