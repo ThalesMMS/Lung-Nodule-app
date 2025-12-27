@@ -535,12 +535,12 @@ struct LungRADSCalculatorTests {
         input.sizeCategory = .fifteenToThirty
         input.ctStatus = .baseline
         input.hasInflammatoryFindings = true
-        
+
         let result = LungRADSCalculator.calculate(input: input)
         #expect(result.category == .cat0)
         #expect(result.management.contains("1-3 months"))
     }
-    
+
     // MARK: Category 1 Tests
     
     @Test func benignCalcificationReturnsCategory1() async throws {
@@ -759,11 +759,11 @@ struct LungRADSCalculatorTests {
         input.sizeCategory = .fourToSix
         input.ctStatus = .followUp
         input.noduleStatus = .stable
-        
+
         let result = LungRADSCalculator.calculate(input: input)
         #expect(result.category == .cat4B)
     }
-    
+
     /// Per Lung-RADS v2022: Growing segmental/proximal airway nodules at follow-up = 4B
     @Test func airwayNoduleSegmentalGrowingFollowUpReturnsCategory4B() async throws {
         var input = LungRADSInput()
@@ -771,11 +771,11 @@ struct LungRADSCalculatorTests {
         input.sizeCategory = .fourToSix
         input.ctStatus = .followUp
         input.noduleStatus = .growing
-        
+
         let result = LungRADSCalculator.calculate(input: input)
         #expect(result.category == .cat4B)
     }
-    
+
     /// Per Lung-RADS v2022: Baseline thick-walled/multilocular cyst = 4A (4B only for evolution/growth)
     @Test func atypicalCystBaselineReturnsCategory4A() async throws {
         var input = LungRADSInput()
@@ -1152,6 +1152,33 @@ struct LungRADSEdgeCaseTests {
         #expect(result.category == .cat3)
     }
     
+    // MARK: - L030-L031: Slow-Growing Solid/Part-Solid Tests
+
+    /// L030: Slow-growing solid 7mm on follow-up -> Category 4B
+    @Test func L030_slowGrowingSolid7mm() async throws {
+        var input = LungRADSInput()
+        input.noduleType = .solid
+        input.sizeCategory = .sixToEight
+        input.ctStatus = .followUp
+        input.noduleStatus = .slowGrowing
+
+        let result = LungRADSCalculator.calculate(input: input)
+        #expect(result.category == .cat4B)
+    }
+
+    /// L031: Slow-growing part-solid 12mm with solid 6mm -> Category 4B
+    @Test func L031_slowGrowingPartSolid12mmSolid6mm() async throws {
+        var input = LungRADSInput()
+        input.noduleType = .partSolid
+        input.sizeCategory = .eightToFifteen
+        input.solidComponentSize = .sixToEight
+        input.ctStatus = .followUp
+        input.noduleStatus = .slowGrowing
+
+        let result = LungRADSCalculator.calculate(input: input)
+        #expect(result.category == .cat4B)
+    }
+
     // MARK: - L032-L043: Part-Solid Nodule Tests
     
     /// L032: Baseline part-solid 5.9mm (<6) -> Category 2

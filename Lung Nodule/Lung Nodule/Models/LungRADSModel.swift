@@ -225,7 +225,7 @@ struct LungRADSCalculator {
                 additionalNotes: "Category 0 pending prior CT review."
             )
         }
-        
+
         // Category 0: Suspected infection/inflammation
         if input.hasInflammatoryFindings {
             return LungRADSResult(
@@ -234,7 +234,7 @@ struct LungRADSCalculator {
                 additionalNotes: "Findings suggest infection or inflammation. Short-term follow-up recommended."
             )
         }
-        
+
         // Category 1: Benign calcification or fat (hamartoma)
         if input.hasBenignCalcification {
             return LungRADSResult(
@@ -333,7 +333,7 @@ struct LungRADSCalculator {
             )
         }
     }
-    
+
     private static func calculateSolidFollowUp(size: Double, input: LungRADSInput) -> LungRADSResult {
         // Slow-growing solid nodules on follow-up remain suspicious
         if input.noduleStatus == .slowGrowing {
@@ -343,7 +343,7 @@ struct LungRADSCalculator {
                 additionalNotes: "Slow-growing solid nodule on follow-up. Suspicious despite sub-threshold growth."
             )
         }
-        
+
         // NEW solid nodules on follow-up
         if input.isNew {
             if size < 4 {
@@ -464,7 +464,7 @@ struct LungRADSCalculator {
                 )
             }
         }
-        
+
         // Slow-growing part-solid nodules on follow-up remain suspicious
         if !input.isBaseline && input.noduleStatus == .slowGrowing {
             return LungRADSResult(
@@ -473,7 +473,7 @@ struct LungRADSCalculator {
                 additionalNotes: "Slow-growing part-solid nodule on follow-up. Suspicious despite sub-threshold growth."
             )
         }
-        
+
         // Total size < 6mm at baseline = Category 2
         if totalSize < 6 {
             return LungRADSResult(
@@ -482,7 +482,7 @@ struct LungRADSCalculator {
                 additionalNotes: "Part-solid nodule < 6mm total size. Very low malignancy probability."
             )
         }
-        
+
         // Baseline or growing part-solid by solid component size
         if solidSize < 6 {
             // Solid < 6mm = Category 3
