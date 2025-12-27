@@ -160,6 +160,7 @@ struct LungRADSInput {
     var hasBenignCalcification: Bool = false
     var hasMacroscopicFat: Bool = false
     var hasInflammatoryFindings: Bool = false
+    var hasAtelectasis: Bool = false
     var hasAdditionalSuspiciousFeatures: Bool = false
     var hasSModifierFindings: Bool = false
     var isMultiple: Bool = false
@@ -593,6 +594,7 @@ struct LungRADSCalculator {
             hasBenignCalcification: input.hasBenignCalcification,
             hasMacroscopicFat: input.hasMacroscopicFat,
             hasInflammatoryFindings: input.hasInflammatoryFindings,
+            hasAtelectasis: input.hasAtelectasis,
             hasAdditionalSuspiciousFeatures: input.hasAdditionalSuspiciousFeatures,
             hasSModifierFindings: input.hasSModifierFindings,
             isMultiple: input.isMultiple
@@ -608,6 +610,13 @@ struct LungRADSCalculator {
         // - Subsegmental airway nodule tends to Category 2
         // - Segmental/proximal baseline = Category 4A
         // - Persistent at 3-month follow-up = Category 4B
+        if input.hasAtelectasis {
+            return LungRADSResult(
+                category: .cat2,
+                management: "Continue annual screening with LDCT in 12 months.",
+                additionalNotes: "Post-obstructive atelectasis is present. Endobronchial finding without other suspicious features."
+            )
+        }
         
         // Segmental or more proximal airway nodule (size ≥ 4mm as proxy)
         if size >= 4 {

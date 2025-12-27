@@ -146,6 +146,7 @@ struct FleischnerCalculatorTests {
         input.isMultiple = true
         
         let result = FleischnerCalculator.calculate(input: input)
+        // Use the dominant/most suspicious nodule to determine management, not the total count.
         #expect(result.recommendation.contains("No routine follow-up"))
     }
     
@@ -167,6 +168,7 @@ struct FleischnerCalculatorTests {
         input.isMultiple = true
         
         let result = FleischnerCalculator.calculate(input: input)
+        // Use the dominant/most suspicious nodule to determine management, not the total count.
         #expect(result.recommendation.contains("3-6 months"))
         #expect(result.recommendation.contains("2 and 4 years"))
     }
@@ -750,11 +752,23 @@ struct LungRADSCalculatorTests {
         input.noduleType = .airway
         input.sizeCategory = .fourToSix
         input.ctStatus = .baseline
-        
+
         let result = LungRADSCalculator.calculate(input: input)
         #expect(result.category == .cat4A)
     }
     
+    @Test func airwayNoduleWithAtelectasis() async throws {
+        var input = LungRADSInput()
+        input.noduleType = .airway
+        input.sizeCategory = .lessThanFour
+        input.ctStatus = .baseline
+        input.hasAtelectasis = true
+
+        let result = LungRADSCalculator.calculate(input: input)
+        #expect(result.category == .cat2)
+        #expect(result.additionalNotes?.contains("atelectasis") == true)
+    }
+
     /// Per Lung-RADS v2022: Persistent segmental/proximal airway nodules at follow-up = 4B
     @Test func airwayNoduleSegmentalStableFollowUpReturnsCategory4B() async throws {
         var input = LungRADSInput()
@@ -786,7 +800,18 @@ struct LungRADSCalculatorTests {
         input.sizeCategory = .eightToFifteen
         input.solidComponentSize = .fourToSix
         input.ctStatus = .baseline
-        
+
+        let result = LungRADSCalculator.calculate(input: input)
+        #expect(result.category == .cat4A)
+    }
+
+    @Test func atypicalPulmonaryCystWithThickWall() async throws {
+        var input = LungRADSInput()
+        input.noduleType = .atypicalCyst
+        input.sizeCategory = .fifteenToThirty
+        input.solidComponentSize = .fourToSix
+        input.ctStatus = .baseline
+
         let result = LungRADSCalculator.calculate(input: input)
         #expect(result.category == .cat4A)
     }
@@ -871,7 +896,18 @@ struct LungRADSCalculatorTests {
         input.sizeCategory = .thirtyPlus
         input.ctStatus = .followUp
         input.noduleStatus = .stable
-        
+
+        let result = LungRADSCalculator.calculate(input: input)
+        #expect(result.category == .cat2)
+    }
+
+    @Test func slowGrowingGGNReturnsCategory2() async throws {
+        var input = LungRADSInput()
+        input.noduleType = .groundGlass
+        input.sizeCategory = .fifteenToThirty
+        input.ctStatus = .followUp
+        input.noduleStatus = .slowGrowing
+
         let result = LungRADSCalculator.calculate(input: input)
         #expect(result.category == .cat2)
     }

@@ -61,6 +61,7 @@ struct LungRADSView: View {
         benignFeaturesGroup
         multipleNodulesRow
         inflammatoryFindingsRow
+        atelectasisRow
         sizeRow
         solidComponentRow
         noduleStatusRow
@@ -163,6 +164,18 @@ struct LungRADSView: View {
             accentColor: blueAccent,
             trailing: {
                 Toggle("", isOn: $viewModel.input.hasInflammatoryFindings)
+                    .labelsHidden()
+            }
+        )
+    }
+
+    // MARK: - Atelectasis Row
+    private var atelectasisRow: some View {
+        LungRADSSettingsRow(
+            title: "Post-obstructive atelectasis",
+            accentColor: blueAccent,
+            trailing: {
+                Toggle("", isOn: $viewModel.input.hasAtelectasis)
                     .labelsHidden()
             }
         )
@@ -504,6 +517,7 @@ struct LungRADSChangeObservers: ViewModifier {
             .onChange(of: viewModel.input.hasMacroscopicFat) { _, _ in viewModel.calculate() }
             .onChange(of: viewModel.input.hasAdditionalSuspiciousFeatures) { _, _ in viewModel.calculate() }
             .onChange(of: viewModel.input.hasInflammatoryFindings) { _, _ in viewModel.calculate() }
+            .onChange(of: viewModel.input.hasAtelectasis) { _, _ in viewModel.calculate() }
             .onChange(of: viewModel.input.isMultiple) { _, _ in viewModel.calculate() }
     }
 }
