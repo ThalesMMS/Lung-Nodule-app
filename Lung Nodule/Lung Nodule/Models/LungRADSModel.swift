@@ -162,6 +162,7 @@ struct LungRADSInput {
     var hasInflammatoryFindings: Bool = false
     var hasAdditionalSuspiciousFeatures: Bool = false
     var hasSModifierFindings: Bool = false
+    var isMultiple: Bool = false
     
     var isBaseline: Bool {
         return ctStatus == .baseline
@@ -208,81 +209,76 @@ struct LungRADSCalculator {
     // MARK: - Main Calculator Entry Point
     
     static func calculate(input: LungRADSInput) -> LungRADSResult {
+        var result: LungRADSResult
+
         // Category 0: Incomplete
         if input.ctStatus == .incomplete {
-            return LungRADSResult(
+            result = LungRADSResult(
                 category: .cat0,
                 management: "Additional imaging or comparison required. Prior chest CT needed for comparison OR recall for complete exam.",
                 additionalNotes: "Category 0 assigned when exam is technically inadequate or prior CT needed for comparison."
             )
-        }
-        
-        // Category 0: Awaiting Comparison
-        if input.ctStatus == .awaitingComparison {
-            return LungRADSResult(
+        } else if input.ctStatus == .awaitingComparison {
+            // Category 0: Awaiting Comparison
+            result = LungRADSResult(
                 category: .cat0,
                 management: "Comparison CT required. Obtain prior exam for comparison before final categorization.",
                 additionalNotes: "Category 0 pending prior CT review."
             )
-        }
-
-        // Category 0: Suspected infection/inflammation
-        if input.hasInflammatoryFindings {
-            return LungRADSResult(
+        } else if input.hasInflammatoryFindings {
+            // Category 0: Suspected infection/inflammation
+            result = LungRADSResult(
                 category: .cat0,
                 management: "Short-term follow-up LDCT in 1-3 months to confirm resolution.",
                 additionalNotes: "Findings suggest infection or inflammation. Short-term follow-up recommended."
             )
-        }
-
-        // Category 1: Benign calcification or fat (hamartoma)
-        if input.hasBenignCalcification {
-            return LungRADSResult(
+        } else if input.hasBenignCalcification {
+            // Category 1: Benign calcification or fat (hamartoma)
+            result = LungRADSResult(
                 category: .cat1,
                 management: "Continue annual screening with LDCT in 12 months.",
                 additionalNotes: "Benign calcification pattern (complete, central, popcorn, or concentric rings) indicates benign nodule."
             )
-        }
-        
-        if input.hasMacroscopicFat {
-            return LungRADSResult(
+        } else if input.hasMacroscopicFat {
+            result = LungRADSResult(
                 category: .cat1,
                 management: "Continue annual screening with LDCT in 12 months.",
                 additionalNotes: "Macroscopic fat within nodule indicates hamartoma (benign)."
             )
-        }
-        
-        // Category 2: Resolved nodule
-        if input.noduleStatus == .resolved {
-            return LungRADSResult(
+        } else if input.noduleStatus == .resolved {
+            // Category 2: Resolved nodule
+            result = LungRADSResult(
                 category: .cat2,
                 management: "Continue annual screening with LDCT in 12 months.",
                 additionalNotes: "Resolution of previously seen nodule indicates benign etiology."
             )
+        } else {
+            // Route to specific nodule type calculator
+            switch input.noduleType {
+            case .solid:
+                result = calculateSolid(input: input)
+            case .partSolid:
+                result = calculatePartSolid(input: input)
+            case .groundGlass:
+                result = calculateGGO(input: input)
+            case .perifissural, .juxtapleural:
+                // Per Lung-RADS v2022: Both perifissural and juxtapleural with benign criteria use same logic
+                result = calculatePerifissural(input: input)
+            case .airway:
+                result = calculateAirway(input: input)
+            case .atypicalCyst:
+                result = calculateAtypicalCyst(input: input)
+            }
+
+            // Apply 4X upgrade if additional suspicious features present
+            // Per Lung-RADS v2022: Category 3, 4A, or 4B + suspicious features = 4X
+            if input.hasAdditionalSuspiciousFeatures && (result.category == .cat3 || result.category == .cat4A || result.category == .cat4B) {
+                result = upgrade4X(from: result)
+            }
         }
-        
-        // Route to specific nodule type calculator
-        var result: LungRADSResult
-        switch input.noduleType {
-        case .solid:
-            result = calculateSolid(input: input)
-        case .partSolid:
-            result = calculatePartSolid(input: input)
-        case .groundGlass:
-            result = calculateGGO(input: input)
-        case .perifissural, .juxtapleural:
-            // Per Lung-RADS v2022: Both perifissural and juxtapleural with benign criteria use same logic
-            result = calculatePerifissural(input: input)
-        case .airway:
-            result = calculateAirway(input: input)
-        case .atypicalCyst:
-            result = calculateAtypicalCyst(input: input)
-        }
-        
-        // Apply 4X upgrade if additional suspicious features present
-        // Per Lung-RADS v2022: Category 3, 4A, or 4B + suspicious features = 4X
-        if input.hasAdditionalSuspiciousFeatures && (result.category == .cat3 || result.category == .cat4A || result.category == .cat4B) {
-            result = upgrade4X(from: result)
+
+        if input.isMultiple {
+            result = applyMultipleNodulesNote(to: result)
         }
         
         return result
@@ -598,7 +594,8 @@ struct LungRADSCalculator {
             hasMacroscopicFat: input.hasMacroscopicFat,
             hasInflammatoryFindings: input.hasInflammatoryFindings,
             hasAdditionalSuspiciousFeatures: input.hasAdditionalSuspiciousFeatures,
-            hasSModifierFindings: input.hasSModifierFindings
+            hasSModifierFindings: input.hasSModifierFindings,
+            isMultiple: input.isMultiple
         ))
     }
     
@@ -676,7 +673,7 @@ struct LungRADSCalculator {
             additionalNotes: "Atypical pulmonary cyst. Continue monitoring for evolution."
         )
     }
-    
+
     // MARK: - Category 4X Upgrade
     
     private static func upgrade4X(from result: LungRADSResult) -> LungRADSResult {
@@ -685,6 +682,24 @@ struct LungRADSCalculator {
             baseCategory: result.category,
             management: result.management + " Additional features increase suspicion for malignancy.",
             additionalNotes: "Upgraded to 4X due to additional suspicious features (spiculation, lymphadenopathy, chest wall involvement, etc.)."
+        )
+    }
+
+    private static func applyMultipleNodulesNote(to result: LungRADSResult) -> LungRADSResult {
+        let note = "Multiple nodules present. Assign category based on the most suspicious nodule."
+        let combinedNotes: String
+        if let existingNotes = result.additionalNotes, !existingNotes.isEmpty {
+            combinedNotes = existingNotes + " " + note
+        } else {
+            combinedNotes = note
+        }
+        return LungRADSResult(
+            category: result.category,
+            baseCategory: result.baseCategory,
+            management: result.management,
+            probabilityOfMalignancy: result.probabilityOfMalignancy,
+            additionalNotes: combinedNotes,
+            isReclassified: result.isReclassified
         )
     }
 }

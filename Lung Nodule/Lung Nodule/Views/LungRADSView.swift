@@ -59,6 +59,8 @@ struct LungRADSView: View {
         ctStatusRow
         morphologyRow
         benignFeaturesGroup
+        multipleNodulesRow
+        inflammatoryFindingsRow
         sizeRow
         solidComponentRow
         noduleStatusRow
@@ -141,7 +143,31 @@ struct LungRADSView: View {
         .cornerRadius(12)
         .padding(.horizontal, 16)
     }
-    
+
+    // MARK: - Multiple Nodules Row
+    private var multipleNodulesRow: some View {
+        LungRADSSettingsRow(
+            title: "Multiple Nodules",
+            accentColor: blueAccent,
+            trailing: {
+                Toggle("", isOn: $viewModel.input.isMultiple)
+                    .labelsHidden()
+            }
+        )
+    }
+
+    // MARK: - Inflammatory Findings Row
+    private var inflammatoryFindingsRow: some View {
+        LungRADSSettingsRow(
+            title: "Inflammatory/Infectious Findings",
+            accentColor: blueAccent,
+            trailing: {
+                Toggle("", isOn: $viewModel.input.hasInflammatoryFindings)
+                    .labelsHidden()
+            }
+        )
+    }
+
     // MARK: - Size Row
     private var sizeRow: some View {
         LungRADSSettingsRow(
@@ -470,6 +496,7 @@ struct LungRADSChangeObservers: ViewModifier {
             .onChange(of: viewModel.input.hasMacroscopicFat) { _, _ in viewModel.calculate() }
             .onChange(of: viewModel.input.hasAdditionalSuspiciousFeatures) { _, _ in viewModel.calculate() }
             .onChange(of: viewModel.input.hasInflammatoryFindings) { _, _ in viewModel.calculate() }
+            .onChange(of: viewModel.input.isMultiple) { _, _ in viewModel.calculate() }
     }
 }
 

@@ -845,11 +845,23 @@ struct LungRADSCalculatorTests {
         input.noduleType = .groundGlass
         input.sizeCategory = .fifteenToThirty
         input.ctStatus = .baseline
-        
+
         let result = LungRADSCalculator.calculate(input: input)
         #expect(result.category == .cat2)
     }
-    
+
+    @Test func multipleGGOLessThan6mmReturnsCategory2WithNote() async throws {
+        var input = LungRADSInput()
+        input.noduleType = .groundGlass
+        input.sizeCategory = .fourToSix
+        input.ctStatus = .baseline
+        input.isMultiple = true
+
+        let result = LungRADSCalculator.calculate(input: input)
+        #expect(result.category == .cat2)
+        #expect(result.additionalNotes?.contains("Multiple nodules") == true)
+    }
+
     @Test func stableGGO30mmPlusReturnsCategory2() async throws {
         var input = LungRADSInput()
         input.noduleType = .groundGlass
