@@ -55,6 +55,7 @@ enum LungRADSCategory: String, Comparable {
 }
 
 enum LungRADSNoduleType: String, CaseIterable, Identifiable {
+    case noNodule = "No Nodule"
     case solid = "Solid"
     case partSolid = "Part-Solid"
     case groundGlass = "Non-Solid (GGO)"
@@ -67,6 +68,7 @@ enum LungRADSNoduleType: String, CaseIterable, Identifiable {
     
     var description: String {
         switch self {
+        case .noNodule: return "No pulmonary nodule detected"
         case .solid: return "Entirely soft-tissue attenuation nodule"
         case .partSolid: return "Mixed ground-glass and solid components"
         case .groundGlass: return "Pure ground-glass opacity (non-solid)"
@@ -151,10 +153,20 @@ enum NoduleStatus: String, CaseIterable, Identifiable {
     var id: String { self.rawValue }
 }
 
+enum AirwayLocation: String, CaseIterable, Identifiable {
+    case subsegmental = "Subsegmental"
+    case segmentalOrProximal = "Segmental/Proximal"
+    
+    var id: String { self.rawValue }
+}
+
 struct LungRADSInput {
     var noduleType: LungRADSNoduleType = .solid
     var sizeCategory: LungRADSSize = .lessThanFour
     var solidComponentSize: LungRADSSolidComponentSize = .none
+    var sizeMm: Double? = nil
+    var solidComponentMm: Double? = nil
+    var airwayLocation: AirwayLocation = .subsegmental
     var ctStatus: CTStatus = .baseline
     var noduleStatus: NoduleStatus = .baseline
     var hasBenignCalcification: Bool = false
@@ -179,6 +191,27 @@ struct LungRADSInput {
     
     var isStable: Bool {
         return noduleStatus == .stable || noduleStatus == .slowGrowing
+    }
+
+    var sizeValue: Double {
+        if let sizeMm, sizeMm > 0 {
+            return sizeMm
+        }
+        return sizeCategory.lowerBound
+    }
+
+    var solidComponentValue: Double {
+        if let solidComponentMm, solidComponentMm > 0 {
+            return solidComponentMm
+        }
+        return solidComponentSize.midpoint
+    }
+
+    var hasSolidComponent: Bool {
+        if let solidComponentMm {
+            return solidComponentMm > 0
+        }
+        return solidComponentSize != .none
     }
 }
 
@@ -226,6 +259,13 @@ struct LungRADSCalculator {
                 management: "Comparison CT required. Obtain prior exam for comparison before final categorization.",
                 additionalNotes: "Category 0 pending prior CT review."
             )
+        } else if input.noduleType == .noNodule {
+            // Category 1: Negative exam (no nodules)
+            result = LungRADSResult(
+                category: .cat1,
+                management: "Continue annual screening with LDCT in 12 months.",
+                additionalNotes: "No pulmonary nodules detected."
+            )
         } else if input.hasInflammatoryFindings {
             // Category 0: Suspected infection/inflammation
             result = LungRADSResult(
@@ -256,6 +296,12 @@ struct LungRADSCalculator {
         } else {
             // Route to specific nodule type calculator
             switch input.noduleType {
+            case .noNodule:
+                result = LungRADSResult(
+                    category: .cat1,
+                    management: "Continue annual screening with LDCT in 12 months.",
+                    additionalNotes: "No pulmonary nodules detected."
+                )
             case .solid:
                 result = calculateSolid(input: input)
             case .partSolid:
@@ -288,7 +334,7 @@ struct LungRADSCalculator {
     // MARK: - Solid Nodule (Lung-RADS v2022)
     
     private static func calculateSolid(input: LungRADSInput) -> LungRADSResult {
-        let size = input.sizeCategory.lowerBound
+        let size = input.sizeValue
         
         // Baseline CT scenarios
         if input.isBaseline {
@@ -423,11 +469,27 @@ struct LungRADSCalculator {
     // MARK: - Part-Solid Nodule (Lung-RADS v2022)
     
     private static func calculatePartSolid(input: LungRADSInput) -> LungRADSResult {
-        let totalSize = input.sizeCategory.lowerBound
-        let solidSize = input.solidComponentSize.midpoint
-        
+        let totalSize = input.sizeValue
+        let solidSize = input.solidComponentValue
+
+        // Growing part-solid nodules are suspicious regardless of baseline size
+        if input.isGrowing {
+            if solidSize < 8 {
+                return LungRADSResult(
+                    category: .cat4A,
+                    management: "3-month LDCT; PET/CT may be used if ≥ 8mm.",
+                    additionalNotes: "Growing part-solid nodule with solid component < 8mm. Any growth is suspicious."
+                )
+            }
+            return LungRADSResult(
+                category: .cat4B,
+                management: "Chest CT with or without contrast, PET/CT and/or tissue sampling.",
+                additionalNotes: "Growing part-solid nodule with solid component ≥ 8mm. Very suspicious."
+            )
+        }
+
         // Solid component resolved = Category 2
-        if input.solidComponentSize == .none && !input.isBaseline {
+        if !input.hasSolidComponent && !input.isBaseline {
             return LungRADSResult(
                 category: .cat2,
                 management: "Continue annual screening with LDCT in 12 months.",
@@ -471,6 +533,27 @@ struct LungRADSCalculator {
             )
         }
 
+        // STABLE part-solid nodules - potential downgrade
+        if !input.isBaseline && input.isStable {
+            if totalSize >= 6 && solidSize < 6 {
+                return LungRADSResult(
+                    category: .cat2,
+                    baseCategory: .cat3,
+                    management: "Continue annual screening with LDCT in 12 months.",
+                    additionalNotes: "Category 3 → 2: Part-solid nodule with solid component < 6mm stable on follow-up.",
+                    isReclassified: true
+                )
+            } else if solidSize >= 6 && solidSize < 8 {
+                return LungRADSResult(
+                    category: .cat3,
+                    baseCategory: .cat4A,
+                    management: "6-month LDCT.",
+                    additionalNotes: "Category 4A → 3: Part-solid nodule with solid component 6-7.9mm stable at 3-month follow-up.",
+                    isReclassified: true
+                )
+            }
+        }
+
         // Total size < 6mm at baseline = Category 2
         if totalSize < 6 {
             return LungRADSResult(
@@ -490,13 +573,6 @@ struct LungRADSCalculator {
             )
         } else if solidSize >= 6 && solidSize < 8 {
             // Solid 6-7.9mm = Category 4A
-            if input.isGrowing {
-                return LungRADSResult(
-                    category: .cat4A,
-                    management: "3-month LDCT; PET/CT may be used.",
-                    additionalNotes: "Growing part-solid with solid component 6-7.9mm. Suspicious."
-                )
-            }
             return LungRADSResult(
                 category: .cat4A,
                 management: "3-month LDCT; PET/CT may be used.",
@@ -515,7 +591,7 @@ struct LungRADSCalculator {
     // MARK: - Non-Solid / GGO Nodule (Lung-RADS v2022)
     
     private static func calculateGGO(input: LungRADSInput) -> LungRADSResult {
-        let size = input.sizeCategory.lowerBound
+        let size = input.sizeValue
         
         // GGO < 30mm
         if size < 30 {
@@ -568,12 +644,8 @@ struct LungRADSCalculator {
     private static func calculatePerifissural(input: LungRADSInput) -> LungRADSResult {
         // Per Lung-RADS v2022: Perifissural/juxtapleural nodule with benign criteria <10mm = Category 2
         // (triangular/lentiform/ovoid, smooth margins, attached to fissure or pleural surface)
-        
-        // Size categories entirely <10mm: lessThanFour, fourToSix, sixToEight
-        // Categories that include ≥10mm: eightToFifteen, fifteenToThirty, thirtyPlus
-        let isLessThan10mm = input.sizeCategory == .lessThanFour || 
-                             input.sizeCategory == .fourToSix || 
-                             input.sizeCategory == .sixToEight
+        let size = input.sizeValue
+        let isLessThan10mm = size < 10
         
         if isLessThan10mm {
             // < 10mm with benign morphology = Category 2
@@ -589,6 +661,9 @@ struct LungRADSCalculator {
             noduleType: .solid,
             sizeCategory: input.sizeCategory,
             solidComponentSize: input.solidComponentSize,
+            sizeMm: input.sizeMm,
+            solidComponentMm: input.solidComponentMm,
+            airwayLocation: input.airwayLocation,
             ctStatus: input.ctStatus,
             noduleStatus: input.noduleStatus,
             hasBenignCalcification: input.hasBenignCalcification,
@@ -604,8 +679,6 @@ struct LungRADSCalculator {
     // MARK: - Airway/Endobronchial Nodule (Lung-RADS v2022)
     
     private static func calculateAirway(input: LungRADSInput) -> LungRADSResult {
-        let size = input.sizeCategory.lowerBound
-        
         // Per Lung-RADS v2022:
         // - Subsegmental airway nodule tends to Category 2
         // - Segmental/proximal baseline = Category 4A
@@ -618,8 +691,8 @@ struct LungRADSCalculator {
             )
         }
         
-        // Segmental or more proximal airway nodule (size ≥ 4mm as proxy)
-        if size >= 4 {
+        // Segmental or more proximal airway nodule
+        if input.airwayLocation == .segmentalOrProximal {
             // Check if this is a follow-up with persistence (4B)
             if !input.isBaseline && (input.isStable || input.isGrowing || input.noduleStatus == .baseline) {
                 // Persistent at follow-up = Category 4B
@@ -638,18 +711,18 @@ struct LungRADSCalculator {
             )
         }
         
-        // Subsegmental (< 4mm) = Category 2
+        // Subsegmental = Category 2
         return LungRADSResult(
             category: .cat2,
             management: "Continue annual screening with LDCT in 12 months.",
-            additionalNotes: "Subsegmental airway nodule < 4mm. May represent mucus or secretion. Continue routine screening."
+            additionalNotes: "Subsegmental airway nodule. May represent mucus or secretion. Continue routine screening."
         )
     }
     
     // MARK: - Atypical Pulmonary Cyst (Lung-RADS v2022)
     
     private static func calculateAtypicalCyst(input: LungRADSInput) -> LungRADSResult {
-        let wallThickness = input.solidComponentSize.midpoint
+        let wallThickness = input.solidComponentValue
         
         // Per Lung-RADS v2022:
         // - Baseline thick-walled (≥2mm) or multilocular cyst = Category 4A

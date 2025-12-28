@@ -120,20 +120,14 @@ struct FleischnerView: View {
                 hasInfo: true,
                 onInfoTap: { showSizeInfo = true },
                 trailing: {
-                    Menu {
-                        ForEach(FleischnerSize.allCases) { size in
-                            Button(size.rawValue) {
-                                viewModel.input.sizeCategory = size
-                            }
-                        }
-                    } label: {
-                        HStack(spacing: 4) {
-                            Text(sizeDisplayText(viewModel.input.sizeCategory))
-                                .foregroundColor(Color(red: 0.2, green: 0.8, blue: 0.2))
-                            Image(systemName: "chevron.up.chevron.down")
-                                .font(.caption)
-                                .foregroundColor(Color(red: 0.2, green: 0.8, blue: 0.2))
-                        }
+                    HStack(spacing: 6) {
+                        TextField("mm", text: $viewModel.sizeText)
+                            .keyboardType(.decimalPad)
+                            .multilineTextAlignment(.trailing)
+                            .foregroundColor(Color(red: 0.2, green: 0.8, blue: 0.2))
+                            .frame(width: 70)
+                        Text("mm")
+                            .foregroundColor(.gray)
                     }
                 }
             )
@@ -159,20 +153,14 @@ struct FleischnerView: View {
                     hasInfo: true,
                     onInfoTap: { showSolidComponentInfo = true },
                     trailing: {
-                        Menu {
-                            ForEach(FleischnerSolidComponentSize.allCases) { size in
-                                Button(size.rawValue) {
-                                    viewModel.input.solidComponentSize = size
-                                }
-                            }
-                        } label: {
-                            HStack(spacing: 4) {
-                                Text(viewModel.input.solidComponentSize.rawValue)
-                                    .foregroundColor(Color(red: 0.2, green: 0.8, blue: 0.2))
-                                Image(systemName: "chevron.up.chevron.down")
-                                    .font(.caption)
-                                    .foregroundColor(Color(red: 0.2, green: 0.8, blue: 0.2))
-                            }
+                        HStack(spacing: 6) {
+                            TextField("mm", text: $viewModel.solidComponentText)
+                                .keyboardType(.decimalPad)
+                                .multilineTextAlignment(.trailing)
+                                .foregroundColor(Color(red: 0.2, green: 0.8, blue: 0.2))
+                                .frame(width: 70)
+                            Text("mm")
+                                .foregroundColor(.gray)
                         }
                     }
                 )
@@ -273,13 +261,6 @@ struct FleischnerView: View {
         }
     }
     
-    private func sizeDisplayText(_ size: FleischnerSize) -> String {
-        switch size {
-        case .lessThanSix: return "< 6 mm"
-        case .sixToEight: return "6-8 mm"
-        case .greaterThanEight: return "> 8 mm"
-        }
-    }
 }
 
 // Reusable settings row component for Fleischner (green accent)

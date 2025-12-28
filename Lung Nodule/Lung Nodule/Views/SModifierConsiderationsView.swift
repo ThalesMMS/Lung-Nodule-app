@@ -2,6 +2,7 @@ import SwiftUI
 
 struct SModifierConsiderationsView: View {
     @Environment(\.dismiss) private var dismiss
+    @Binding var hasSModifierFindings: Bool
     
     // Thyroid
     @State private var thyroidNodule = false
@@ -285,11 +286,15 @@ struct SModifierConsiderationsView: View {
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Done") {
+                        updateHasSModifierFindings()
                         dismiss()
                     }
                     .foregroundColor(blueAccent)
                 }
             }
+        }
+        .onDisappear {
+            updateHasSModifierFindings()
         }
     }
     
@@ -317,6 +322,37 @@ struct SModifierConsiderationsView: View {
         kidneyLesion = false
         pancreasCyst = false
         otherFindings = false
+        updateHasSModifierFindings()
+    }
+
+    private var hasAnyFindings: Bool {
+        thyroidNodule ||
+        fibroticILD ||
+        bronchiectasis ||
+        emphysema ||
+        newPleuralDisease ||
+        ascendingAorta ||
+        pericardialEffusion ||
+        aorticValveCalcification ||
+        coronaryCalcifications ||
+        pulmonaryArtery ||
+        lymphNodes ||
+        mediastinalMass ||
+        hiatalHernia ||
+        esophagealWallThickening ||
+        osteopenia ||
+        osteoporosis ||
+        breastNodule ||
+        liverLesion ||
+        fattyLiver ||
+        adrenalLesion ||
+        kidneyLesion ||
+        pancreasCyst ||
+        otherFindings
+    }
+
+    private func updateHasSModifierFindings() {
+        hasSModifierFindings = hasAnyFindings
     }
 }
 
@@ -423,5 +459,5 @@ struct SModifierComplexItem: View {
 }
 
 #Preview {
-    SModifierConsiderationsView()
+    SModifierConsiderationsView(hasSModifierFindings: .constant(false))
 }

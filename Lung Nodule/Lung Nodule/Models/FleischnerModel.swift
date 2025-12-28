@@ -178,9 +178,9 @@ struct FleischnerCalculator {
                 )
             case .sixOrMore:
                 return FleischnerRecommendation(
-                    recommendation: "CT at 3-6 months to confirm persistence. If growth occurs or solid component exceeds 8mm, consider PET/CT or tissue sampling.",
+                    recommendation: "CT at 3-6 months to confirm persistence. If growth occurs or solid component is ≥ 6mm, consider PET/CT or tissue sampling.",
                     followUpInterval: "3-6 months initially",
-                    additionalNotes: "Part-solid nodules with solid component ≥ 6mm have higher malignancy risk. PET/CT is most useful when the solid component exceeds 8mm or shows growth. Consider biopsy or surgical resection based on clinical context."
+                    additionalNotes: "Part-solid nodules with solid component ≥ 6mm have higher malignancy risk and may warrant PET/CT or tissue sampling. Consider biopsy or surgical resection based on clinical context."
                 )
             }
         }

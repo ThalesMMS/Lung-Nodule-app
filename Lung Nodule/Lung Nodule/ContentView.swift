@@ -1,4 +1,5 @@
 import SwiftUI
+import Foundation
 
 enum AppMode {
     case info // 'i' icon - Common Issues/Reference
@@ -538,10 +539,17 @@ struct BrockModelView: View {
                     .padding(.bottom, 8)
                 
                 VStack(spacing: 0) {
-                    Text("Enter all required fields.")
-                        .foregroundColor(.gray)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding()
+                    if let probability = brockProbability {
+                        Text(String(format: "Estimated malignancy risk: %.1f%%", probability))
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding()
+                    } else {
+                        Text("Enter all required fields.")
+                            .foregroundColor(.gray)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding()
+                    }
                 }
                 .background(Color(white: 0.15))
                 .cornerRadius(12)
@@ -557,5 +565,97 @@ struct BrockModelView: View {
             
             Spacer()
         }
+    }
+
+    private var brockProbability: Double? {
+        guard let ageValue = parseInt(age), ageValue >= 18 else { return nil }
+        guard let sizeValue = parseDouble(noduleSize), sizeValue >= 3, sizeValue <= 30 else { return nil }
+        guard let countValue = parseInt(noduleCount), countValue >= 1 else { return nil }
+
+        let type: BrockNoduleType
+        switch noduleMorphology {
+        case 0: type = .nonsolid
+        case 1: type = .partSolid
+        default: type = .solid
+        }
+
+        let input = BrockInput(
+            age: ageValue,
+            isFemale: gender == 1,
+            noduleSizeMm: sizeValue,
+            noduleType: type,
+            upperLobe: upperLobe,
+            noduleCount: countValue,
+            spiculation: spiculation,
+            familyHistory: familyHistory,
+            emphysema: emphysema
+        )
+
+        return BrockCalculator.calculateProbability(input: input)
+    }
+
+    private func parseDouble(_ text: String) -> Double? {
+        let normalized = text.trimmingCharacters(in: .whitespacesAndNewlines)
+            .replacingOccurrences(of: ",", with: ".")
+        return Double(normalized)
+    }
+
+    private func parseInt(_ text: String) -> Int? {
+        let normalized = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        return Int(normalized)
+    }
+}
+
+enum BrockNoduleType {
+    case nonsolid
+    case partSolid
+    case solid
+}
+
+struct BrockInput {
+    let age: Int
+    let isFemale: Bool
+    let noduleSizeMm: Double
+    let noduleType: BrockNoduleType
+    let upperLobe: Bool
+    let noduleCount: Int
+    let spiculation: Bool
+    let familyHistory: Bool
+    let emphysema: Bool
+}
+
+struct BrockCalculator {
+    static func calculateProbability(input: BrockInput) -> Double {
+        let ageTerm = 0.0287 * (Double(input.age) - 62.0)
+        let sexTerm = input.isFemale ? 0.6011 : 0.0
+        let familyHistoryTerm = input.familyHistory ? 0.2961 : 0.0
+        let emphysemaTerm = input.emphysema ? 0.2953 : 0.0
+        let spiculationTerm = input.spiculation ? 0.7729 : 0.0
+        let upperLobeTerm = input.upperLobe ? 0.6581 : 0.0
+        let noduleTypeTerm: Double
+        switch input.noduleType {
+        case .nonsolid:
+            noduleTypeTerm = -0.1276
+        case .partSolid:
+            noduleTypeTerm = 0.377
+        case .solid:
+            noduleTypeTerm = 0.0
+        }
+
+        let sizeTerm = -5.3854 * (pow(input.noduleSizeMm / 10.0, -0.5) - 1.58113883)
+        let countTerm = -0.0824 * (Double(input.noduleCount) - 4.0)
+        let logOdds = -6.7892
+            + ageTerm
+            + sexTerm
+            + familyHistoryTerm
+            + emphysemaTerm
+            + sizeTerm
+            + noduleTypeTerm
+            + upperLobeTerm
+            + countTerm
+            + spiculationTerm
+
+        let odds = exp(logOdds)
+        return (odds / (1.0 + odds)) * 100.0
     }
 }

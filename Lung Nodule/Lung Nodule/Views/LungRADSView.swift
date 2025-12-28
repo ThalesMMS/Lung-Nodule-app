@@ -18,6 +18,7 @@ struct LungRADSView: View {
             .onAppear { viewModel.calculate() }
             .modifier(LungRADSChangeObservers(viewModel: viewModel))
             .modifier(LungRADSSheets(
+                viewModel: viewModel,
                 showSModifierConsiderations: $showSModifierConsiderations,
                 showCTStatusInfo: $showCTStatusInfo
             ))
@@ -182,20 +183,44 @@ struct LungRADSView: View {
     }
 
     // MARK: - Size Row
+    @ViewBuilder
     private var sizeRow: some View {
+        if viewModel.input.noduleType == .airway {
+            airwayLocationRow
+        } else {
+            LungRADSSettingsRow(
+                title: "Nodule Size",
+                hasInfo: true,
+                accentColor: blueAccent,
+                onInfoTap: { showSizeInfo = true },
+                trailing: {
+                    HStack(spacing: 6) {
+                        TextField("mm", text: $viewModel.sizeText)
+                            .keyboardType(.decimalPad)
+                            .multilineTextAlignment(.trailing)
+                            .foregroundColor(blueAccent)
+                            .frame(width: 70)
+                        Text("mm")
+                            .foregroundColor(.gray)
+                    }
+                }
+            )
+        }
+    }
+
+    private var airwayLocationRow: some View {
         LungRADSSettingsRow(
-            title: "Nodule Size",
-            hasInfo: true,
+            title: "Airway Location",
+            hasInfo: false,
             accentColor: blueAccent,
-            onInfoTap: { showSizeInfo = true },
             trailing: {
                 LungRADSMenuPicker(
-                    selection: viewModel.input.sizeCategory.rawValue,
+                    selection: viewModel.input.airwayLocation.rawValue,
                     accentColor: blueAccent,
-                    options: LungRADSSize.allCases.map { $0.rawValue },
+                    options: AirwayLocation.allCases.map { $0.rawValue },
                     onSelect: { value in
-                        if let size = LungRADSSize.allCases.first(where: { $0.rawValue == value }) {
-                            viewModel.input.sizeCategory = size
+                        if let location = AirwayLocation.allCases.first(where: { $0.rawValue == value }) {
+                            viewModel.input.airwayLocation = location
                         }
                     }
                 )
@@ -213,16 +238,15 @@ struct LungRADSView: View {
                 accentColor: blueAccent,
                 onInfoTap: { showSolidComponentInfo = true },
                 trailing: {
-                    LungRADSMenuPicker(
-                        selection: viewModel.input.solidComponentSize.rawValue,
-                        accentColor: blueAccent,
-                        options: LungRADSSolidComponentSize.allCases.map { $0.rawValue },
-                        onSelect: { value in
-                            if let size = LungRADSSolidComponentSize.allCases.first(where: { $0.rawValue == value }) {
-                                viewModel.input.solidComponentSize = size
-                            }
-                        }
-                    )
+                    HStack(spacing: 6) {
+                        TextField("mm", text: $viewModel.solidComponentText)
+                            .keyboardType(.decimalPad)
+                            .multilineTextAlignment(.trailing)
+                            .foregroundColor(blueAccent)
+                            .frame(width: 70)
+                        Text("mm")
+                            .foregroundColor(.gray)
+                    }
                 }
             )
         }
@@ -511,6 +535,8 @@ struct LungRADSChangeObservers: ViewModifier {
             .onChange(of: viewModel.input.noduleType) { _, _ in viewModel.calculate() }
             .onChange(of: viewModel.input.sizeCategory) { _, _ in viewModel.calculate() }
             .onChange(of: viewModel.input.solidComponentSize) { _, _ in viewModel.calculate() }
+            .onChange(of: viewModel.input.sizeMm) { _, _ in viewModel.calculate() }
+            .onChange(of: viewModel.input.solidComponentMm) { _, _ in viewModel.calculate() }
             .onChange(of: viewModel.input.ctStatus) { _, _ in viewModel.calculate() }
             .onChange(of: viewModel.input.noduleStatus) { _, _ in viewModel.calculate() }
             .onChange(of: viewModel.input.hasBenignCalcification) { _, _ in viewModel.calculate() }
@@ -518,17 +544,22 @@ struct LungRADSChangeObservers: ViewModifier {
             .onChange(of: viewModel.input.hasAdditionalSuspiciousFeatures) { _, _ in viewModel.calculate() }
             .onChange(of: viewModel.input.hasInflammatoryFindings) { _, _ in viewModel.calculate() }
             .onChange(of: viewModel.input.hasAtelectasis) { _, _ in viewModel.calculate() }
+            .onChange(of: viewModel.input.airwayLocation) { _, _ in viewModel.calculate() }
+            .onChange(of: viewModel.input.hasSModifierFindings) { _, _ in viewModel.calculate() }
             .onChange(of: viewModel.input.isMultiple) { _, _ in viewModel.calculate() }
     }
 }
 
 struct LungRADSSheets: ViewModifier {
+    @ObservedObject var viewModel: LungRADSViewModel
     @Binding var showSModifierConsiderations: Bool
     @Binding var showCTStatusInfo: Bool
     
     func body(content: Content) -> some View {
         content
-            .sheet(isPresented: $showSModifierConsiderations) { SModifierConsiderationsView() }
+            .sheet(isPresented: $showSModifierConsiderations) {
+                SModifierConsiderationsView(hasSModifierFindings: $viewModel.input.hasSModifierFindings)
+            }
             .sheet(isPresented: $showCTStatusInfo) { CTStatusInfoView() }
     }
 }
