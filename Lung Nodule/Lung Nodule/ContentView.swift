@@ -25,6 +25,7 @@ enum CalculatorType: String, CaseIterable, Identifiable {
 struct ContentView: View {
     @State private var selectedCalculator: CalculatorType = .fleischner
     @State private var startMode: AppMode = .calculator // Default to calculator as per user request for tool
+    @State private var brockForm = BrockFormState()
     
     // Custom Color for Segmented Control Logic
     init() {
@@ -154,12 +155,22 @@ struct ContentView: View {
                                 FleischnerView()
                                     .padding(.top)
                             } else {
-                                LungRADSView()
+                                LungRADSView(onBrockRequest: openBrockPrefilled)
                                     .padding(.top)
                             }
                         } else if startMode == .info {
                             // "Common Issues" List
                             VStack(alignment: .leading, spacing: 10) {
+                                Text("This application is a decision support tool for healthcare professionals and does not replace clinical judgment. Management should be based on the original guidelines (ACR/Fleischner).")
+                                    .font(.subheadline)
+                                    .foregroundColor(.gray)
+                                    .multilineTextAlignment(.leading)
+                                    .padding()
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .background(Color(white: 0.15))
+                                    .cornerRadius(12)
+                                    .padding(.horizontal)
+
                                 Text("\(selectedCalculator == .fleischner ? "Fleischner" : "Lung-RADS") Common Issues")
                                     .font(.title2).bold()
                                     .foregroundColor(.white)
@@ -285,7 +296,7 @@ struct ContentView: View {
                             .padding(.bottom, 40)
                         } else if startMode == .risk {
                             // Brock Full Model Calculator
-                            BrockModelView()
+                            BrockModelView(form: $brockForm)
                                 .padding(.top)
                         } else {
                             Text("Other Mode")
@@ -299,6 +310,32 @@ struct ContentView: View {
             .toolbar(.hidden, for: .navigationBar)
         }
         .preferredColorScheme(.dark) // Force dark mode
+    }
+
+    private func openBrockPrefilled(from input: LungRADSInput) {
+        if let size = input.sizeMm, size > 0 {
+            brockForm.noduleSize = formatSize(size)
+        }
+        brockForm.noduleMorphology = brockMorphologyIndex(from: input.noduleType)
+        if !input.isMultiple {
+            brockForm.noduleCount = "1"
+        }
+        startMode = .risk
+    }
+
+    private func brockMorphologyIndex(from type: LungRADSNoduleType) -> Int {
+        switch type {
+        case .groundGlass:
+            return 0
+        case .partSolid:
+            return 1
+        default:
+            return 2
+        }
+    }
+
+    private func formatSize(_ value: Double) -> String {
+        String(format: "%.1f", value)
     }
 }
 
@@ -337,17 +374,21 @@ struct ReferenceLink: View {
     }
 }
 
+struct BrockFormState {
+    var age: String = ""
+    var gender: Int = 0
+    var noduleSize: String = ""
+    var noduleMorphology: Int = 0
+    var upperLobe: Bool = false
+    var noduleCount: String = ""
+    var spiculation: Bool = false
+    var familyHistory: Bool = false
+    var emphysema: Bool = false
+}
+
 // Brock Full Model View matching reference Brock Full Model 1.PNG / 2.PNG
 struct BrockModelView: View {
-    @State private var age: String = ""
-    @State private var gender: Int = 0 // 0 = Male, 1 = Female
-    @State private var noduleSize: String = ""
-    @State private var noduleMorphology: Int = 0 // 0 = Non-solid, 1 = Part-solid, 2 = Solid
-    @State private var upperLobe: Bool = false
-    @State private var noduleCount: String = ""
-    @State private var spiculation: Bool = false
-    @State private var familyHistory: Bool = false
-    @State private var emphysema: Bool = false
+    @Binding var form: BrockFormState
     @FocusState private var focusedField: FocusField?
     private let blueAccent = Color(red: 0.0, green: 0.478, blue: 1.0)
 
@@ -385,7 +426,7 @@ struct BrockModelView: View {
                         Text("Age (≥ 18 yrs)")
                             .foregroundColor(.white)
                         Spacer()
-                        TextField("", text: $age)
+                        TextField("", text: $form.age)
                             .keyboardType(.numberPad)
                             .multilineTextAlignment(.trailing)
                             .foregroundColor(.gray)
@@ -404,7 +445,7 @@ struct BrockModelView: View {
                             .foregroundColor(.gray)
                             .font(.caption)
                         
-                        Picker("Gender", selection: $gender) {
+                        Picker("Gender", selection: $form.gender) {
                             Text("Male").tag(0)
                             Text("Female").tag(1)
                         }
@@ -432,7 +473,7 @@ struct BrockModelView: View {
                         Text("Size (3–30 mm)")
                             .foregroundColor(.white)
                         Spacer()
-                        TextField("", text: $noduleSize)
+                        TextField("", text: $form.noduleSize)
                             .keyboardType(.decimalPad)
                             .multilineTextAlignment(.trailing)
                             .foregroundColor(.gray)
@@ -451,7 +492,7 @@ struct BrockModelView: View {
                             .foregroundColor(.gray)
                             .font(.caption)
                         
-                        Picker("Morphology", selection: $noduleMorphology) {
+                        Picker("Morphology", selection: $form.noduleMorphology) {
                             Text("Non-solid (GG)").tag(0)
                             Text("Part-solid").tag(1)
                             Text("Solid").tag(2)
@@ -467,7 +508,7 @@ struct BrockModelView: View {
                         Text("Upper lobe")
                             .foregroundColor(.white)
                         Spacer()
-                        Toggle("", isOn: $upperLobe)
+                        Toggle("", isOn: $form.upperLobe)
                             .labelsHidden()
                     }
                     .padding()
@@ -479,7 +520,7 @@ struct BrockModelView: View {
                         Text("Nodule count (≥ 1), no decimal")
                             .foregroundColor(.white)
                         Spacer()
-                        TextField("#", text: $noduleCount)
+                        TextField("#", text: $form.noduleCount)
                             .keyboardType(.numberPad)
                             .multilineTextAlignment(.trailing)
                             .foregroundColor(.gray)
@@ -495,7 +536,7 @@ struct BrockModelView: View {
                         Text("Spiculation")
                             .foregroundColor(.white)
                         Spacer()
-                        Toggle("", isOn: $spiculation)
+                        Toggle("", isOn: $form.spiculation)
                             .labelsHidden()
                     }
                     .padding()
@@ -519,7 +560,7 @@ struct BrockModelView: View {
                         Text("Family history of lung cancer")
                             .foregroundColor(.white)
                         Spacer()
-                        Toggle("", isOn: $familyHistory)
+                        Toggle("", isOn: $form.familyHistory)
                             .labelsHidden()
                     }
                     .padding()
@@ -530,7 +571,7 @@ struct BrockModelView: View {
                         Text("Emphysema")
                             .foregroundColor(.white)
                         Spacer()
-                        Toggle("", isOn: $emphysema)
+                        Toggle("", isOn: $form.emphysema)
                             .labelsHidden()
                     }
                     .padding()
@@ -586,27 +627,27 @@ struct BrockModelView: View {
     }
 
     private var brockProbability: Double? {
-        guard let ageValue = parseInt(age), ageValue >= 18 else { return nil }
-        guard let sizeValue = parseDouble(noduleSize), sizeValue >= 3, sizeValue <= 30 else { return nil }
-        guard let countValue = parseInt(noduleCount), countValue >= 1 else { return nil }
-
+        guard let ageValue = parseInt(form.age), ageValue >= 18 else { return nil }
+        guard let sizeValue = parseDouble(form.noduleSize), sizeValue >= 3, sizeValue <= 30 else { return nil }
+        guard let countValue = parseInt(form.noduleCount), countValue >= 1 else { return nil }
+        
         let type: BrockNoduleType
-        switch noduleMorphology {
+        switch form.noduleMorphology {
         case 0: type = .nonsolid
         case 1: type = .partSolid
         default: type = .solid
         }
-
+        
         let input = BrockInput(
             age: ageValue,
-            isFemale: gender == 1,
+            isFemale: form.gender == 1,
             noduleSizeMm: sizeValue,
             noduleType: type,
-            upperLobe: upperLobe,
+            upperLobe: form.upperLobe,
             noduleCount: countValue,
-            spiculation: spiculation,
-            familyHistory: familyHistory,
-            emphysema: emphysema
+            spiculation: form.spiculation,
+            familyHistory: form.familyHistory,
+            emphysema: form.emphysema
         )
 
         return BrockCalculator.calculateProbability(input: input)

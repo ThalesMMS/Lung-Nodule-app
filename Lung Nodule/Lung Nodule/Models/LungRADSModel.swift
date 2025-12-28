@@ -146,7 +146,7 @@ enum NoduleStatus: String, CaseIterable, Identifiable {
     case baseline = "Baseline (no prior)"
     case stable = "Stable"
     case newNodule = "New"
-    case growing = "Growing (≥1.5mm increase)"
+    case growing = "Growing (> 1.5 mm increase)"
     case slowGrowing = "Slow Growing (GGO)"
     case resolved = "Resolved"
     
@@ -175,6 +175,7 @@ struct LungRADSInput {
     var hasAtelectasis: Bool = false
     var hasAdditionalSuspiciousFeatures: Bool = false
     var hasSModifierFindings: Bool = false
+    var hasBenignJuxtapleuralMorphology: Bool = false
     var isMultiple: Bool = false
     
     var isBaseline: Bool {
@@ -434,7 +435,7 @@ struct LungRADSCalculator {
                 return LungRADSResult(
                     category: .cat4A,
                     management: "3-month LDCT; PET/CT may be used if ≥ 8mm.",
-                    additionalNotes: "Growing solid nodule < 8mm. Growth defined as ≥ 1.5mm increase. Suspicious."
+                    additionalNotes: "Growing solid nodule < 8mm. Growth defined as > 1.5mm increase. Suspicious."
                 )
             } else {
                 // Growing ≥ 8mm = Category 4B
@@ -653,8 +654,9 @@ struct LungRADSCalculator {
         // (triangular/lentiform/ovoid, smooth margins, attached to fissure or pleural surface)
         let size = input.sizeValue
         let isLessThan10mm = size < 10
+        let hasBenignMorphology = input.noduleType == .juxtapleural ? input.hasBenignJuxtapleuralMorphology : true
         
-        if isLessThan10mm {
+        if isLessThan10mm && hasBenignMorphology {
             // < 10mm with benign morphology = Category 2
             return LungRADSResult(
                 category: .cat2,
@@ -679,6 +681,7 @@ struct LungRADSCalculator {
             hasAtelectasis: input.hasAtelectasis,
             hasAdditionalSuspiciousFeatures: input.hasAdditionalSuspiciousFeatures,
             hasSModifierFindings: input.hasSModifierFindings,
+            hasBenignJuxtapleuralMorphology: input.hasBenignJuxtapleuralMorphology,
             isMultiple: input.isMultiple
         ))
     }
@@ -694,7 +697,7 @@ struct LungRADSCalculator {
             return LungRADSResult(
                 category: .cat2,
                 management: "Continue annual screening with LDCT in 12 months.",
-                additionalNotes: "Post-obstructive atelectasis is present. Endobronchial finding without other suspicious features."
+                additionalNotes: "Atelectasis attributed to mucus plugging without an underlying mass. Endobronchial finding without other suspicious features."
             )
         }
         
@@ -729,6 +732,17 @@ struct LungRADSCalculator {
     // MARK: - Atypical Pulmonary Cyst (Lung-RADS v2022)
     
     private static func calculateAtypicalCyst(input: LungRADSInput) -> LungRADSResult {
+        let solidComponent = input.solidComponentValue
+
+        // Note 12e: manage based on the most concerning feature
+        if solidComponent >= 8 && (input.isBaseline || input.isNew || input.isGrowing) {
+            return LungRADSResult(
+                category: .cat4B,
+                management: "Chest CT with or without contrast, PET/CT and/or tissue sampling.",
+                additionalNotes: "Atypical cyst managed as Category 4B due to solid component ≥ 8mm."
+            )
+        }
+
         // Per Lung-RADS v2022:
         // - Baseline thick-walled (≥2mm) or multilocular cyst = Category 4A
         // - Growing wall thickness/nodularity = Category 4B

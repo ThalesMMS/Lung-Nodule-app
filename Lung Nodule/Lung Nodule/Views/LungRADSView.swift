@@ -17,7 +17,11 @@ struct LungRADSView: View {
     private enum FocusField {
         case size
         case solidComponent
+        case longAxis
+        case shortAxis
     }
+
+    var onBrockRequest: ((LungRADSInput) -> Void)? = nil
     
     var body: some View {
         mainContent
@@ -59,10 +63,14 @@ struct LungRADSView: View {
     @ViewBuilder
     private var resultCardSection: some View {
         if let result = viewModel.result {
+            let brockAction: (() -> Void)? = (result.category == .cat4B && onBrockRequest != nil)
+                ? { onBrockRequest?(viewModel.input) }
+                : nil
             LungRADSResultCard(
                 result: result,
                 blueAccent: blueAccent,
-                onSModifierTap: { showSModifierConsiderations.toggle() }
+                onSModifierTap: { showSModifierConsiderations.toggle() },
+                onBrockTap: brockAction
             )
         }
     }
@@ -72,11 +80,13 @@ struct LungRADSView: View {
     private var inputFieldsSection: some View {
         ctStatusRow
         morphologyRow
+        juxtapleuralMorphologyRow
         benignFeaturesGroup
         multipleNodulesRow
         inflammatoryFindingsRow
         atelectasisRow
         sizeRow
+        axisMeasurementSection
         solidComponentRow
         noduleStatusRow
         suspiciousFeaturesRow
@@ -124,6 +134,20 @@ struct LungRADSView: View {
                 )
             }
         )
+    }
+
+    @ViewBuilder
+    private var juxtapleuralMorphologyRow: some View {
+        if viewModel.input.noduleType == .juxtapleural {
+            LungRADSSettingsRow(
+                title: "Has benign morphology (smooth, oval/lentiform/triangular)?",
+                accentColor: blueAccent,
+                trailing: {
+                    Toggle("", isOn: $viewModel.input.hasBenignJuxtapleuralMorphology)
+                        .labelsHidden()
+                }
+            )
+        }
     }
     
     // MARK: - Benign Features Group
@@ -186,7 +210,7 @@ struct LungRADSView: View {
     // MARK: - Atelectasis Row
     private var atelectasisRow: some View {
         LungRADSSettingsRow(
-            title: "Post-obstructive atelectasis",
+            title: "Atelectasis due to mucus plugging (no underlying mass)",
             accentColor: blueAccent,
             trailing: {
                 Toggle("", isOn: $viewModel.input.hasAtelectasis)
@@ -207,18 +231,77 @@ struct LungRADSView: View {
                 accentColor: blueAccent,
                 onInfoTap: { showSizeInfo = true },
                 trailing: {
-                    HStack(spacing: 6) {
-                        TextField("mm", text: $viewModel.sizeText)
-                            .keyboardType(.decimalPad)
-                            .multilineTextAlignment(.trailing)
-                            .foregroundColor(blueAccent)
-                            .frame(width: 70)
-                            .focused($focusedField, equals: .size)
-                        Text("mm")
-                            .foregroundColor(.gray)
+                    if viewModel.useAxisMeasurements {
+                        HStack(spacing: 6) {
+                            Text(viewModel.axisMeanDisplay)
+                                .foregroundColor(blueAccent)
+                            Text("mm")
+                                .foregroundColor(.gray)
+                        }
+                    } else {
+                        HStack(spacing: 6) {
+                            TextField("mm", text: $viewModel.sizeText)
+                                .keyboardType(.decimalPad)
+                                .multilineTextAlignment(.trailing)
+                                .foregroundColor(blueAccent)
+                                .frame(width: 70)
+                                .focused($focusedField, equals: .size)
+                            Text("mm")
+                                .foregroundColor(.gray)
+                        }
                     }
                 }
             )
+        }
+    }
+
+    @ViewBuilder
+    private var axisMeasurementSection: some View {
+        if viewModel.input.noduleType != .airway {
+            LungRADSSettingsRow(
+                title: "Use long/short axes",
+                accentColor: blueAccent,
+                trailing: {
+                    Toggle("", isOn: $viewModel.useAxisMeasurements)
+                        .labelsHidden()
+                }
+            )
+
+            if viewModel.useAxisMeasurements {
+                LungRADSSettingsRow(
+                    title: "Long axis",
+                    accentColor: blueAccent,
+                    trailing: {
+                        HStack(spacing: 6) {
+                            TextField("mm", text: $viewModel.longAxisText)
+                                .keyboardType(.decimalPad)
+                                .multilineTextAlignment(.trailing)
+                                .foregroundColor(blueAccent)
+                                .frame(width: 70)
+                                .focused($focusedField, equals: .longAxis)
+                            Text("mm")
+                                .foregroundColor(.gray)
+                        }
+                    }
+                )
+
+                LungRADSSettingsRow(
+                    title: "Short axis",
+                    accentColor: blueAccent,
+                    trailing: {
+                        HStack(spacing: 6) {
+                            TextField("mm", text: $viewModel.shortAxisText)
+                                .keyboardType(.decimalPad)
+                                .multilineTextAlignment(.trailing)
+                                .foregroundColor(blueAccent)
+                                .frame(width: 70)
+                                .focused($focusedField, equals: .shortAxis)
+                            Text("mm")
+                                .foregroundColor(.gray)
+                        }
+                    }
+                )
+            }
         }
     }
 
@@ -321,6 +404,7 @@ struct LungRADSResultCard: View {
     let result: LungRADSResult
     let blueAccent: Color
     let onSModifierTap: () -> Void
+    let onBrockTap: (() -> Void)?
     
     var body: some View {
         VStack(spacing: 8) {
@@ -345,6 +429,18 @@ struct LungRADSResultCard: View {
                     .foregroundColor(.gray)
                     .multilineTextAlignment(.center)
                     .padding(.top, 4)
+            }
+
+            if let onBrockTap {
+                Button(action: onBrockTap) {
+                    HStack {
+                        Image(systemName: "waveform.path.ecg")
+                            .foregroundColor(blueAccent)
+                        Text("Calculate Malignancy Risk (Brock)")
+                            .foregroundColor(blueAccent)
+                    }
+                }
+                .padding(.top, 8)
             }
             
             Button(action: onSModifierTap) {
@@ -405,7 +501,7 @@ struct LungRADSResultCard: View {
     }
 
     private var categoryDisplay: String {
-        result.category.rawValue + (result.hasSModifier ? "S" : "")
+        result.category.rawValue + (result.hasSModifier ? "-S" : "")
     }
 }
 
@@ -565,6 +661,7 @@ struct LungRADSChangeObservers: ViewModifier {
             .onChange(of: viewModel.input.hasAtelectasis) { _, _ in viewModel.calculate() }
             .onChange(of: viewModel.input.airwayLocation) { _, _ in viewModel.calculate() }
             .onChange(of: viewModel.input.hasSModifierFindings) { _, _ in viewModel.calculate() }
+            .onChange(of: viewModel.input.hasBenignJuxtapleuralMorphology) { _, _ in viewModel.calculate() }
             .onChange(of: viewModel.input.isMultiple) { _, _ in viewModel.calculate() }
     }
 }
@@ -611,7 +708,7 @@ struct LungRADSAlerts: ViewModifier {
             .alert("Nodule Status", isPresented: $showNoduleStatusInfo) {
                 Button("OK", role: .cancel) { }
             } message: {
-                Text("• Stable: No significant change from prior\n• New: Not present on prior CT\n• Growing: ≥1.5mm increase in mean diameter\n• Slow Growing: GGO with gradual increase\n• Resolved: Previously seen nodule no longer present")
+                Text("• Stable: No significant change from prior\n• New: Not present on prior CT\n• Growing: > 1.5 mm increase in mean diameter\n• Slow Growing: GGO with gradual increase\n• Resolved: Previously seen nodule no longer present")
             }
             .alert("Solid Component", isPresented: $showSolidComponentInfo) {
                 Button("OK", role: .cancel) { }

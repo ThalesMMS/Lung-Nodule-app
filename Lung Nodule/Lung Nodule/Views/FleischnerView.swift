@@ -12,132 +12,16 @@ struct FleischnerView: View {
     private enum FocusField {
         case size
         case solidComponent
+        case longAxis
+        case shortAxis
     }
     
     var body: some View {
         VStack(spacing: 16) {
             // Result Card matching reference Main_Fleischner.PNG
-            if let result = viewModel.result {
-                VStack(spacing: 12) {
-                    // Primary recommendation
-                    Text(primaryRecommendation(from: result.recommendation))
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.white)
-                    
-                    // Primary slider/progress
-                    GeometryReader { geo in
-                        ZStack(alignment: .leading) {
-                            RoundedRectangle(cornerRadius: 4)
-                                .fill(Color(white: 0.3))
-                                .frame(height: 8)
-                            
-                            RoundedRectangle(cornerRadius: 4)
-                                .fill(Color(red: 0.2, green: 0.8, blue: 0.2))
-                                .frame(width: progressWidth(for: result.recommendation, in: geo.size.width), height: 8)
-                            
-                            // Slider knobs
-                            Circle()
-                                .fill(Color.white)
-                                .frame(width: 16, height: 16)
-                                .offset(x: knobOffset(for: result.recommendation, in: geo.size.width, isStart: true))
-                            
-                            Circle()
-                                .fill(Color.white)
-                                .frame(width: 16, height: 16)
-                                .offset(x: knobOffset(for: result.recommendation, in: geo.size.width, isStart: false))
-                        }
-                    }
-                    .frame(height: 20)
-                    .padding(.horizontal, 8)
-                    
-                    // Secondary recommendation if applicable
-                    if hasSecondaryRecommendation(result.recommendation) {
-                        Text(secondaryRecommendation(from: result.recommendation))
-                            .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(.white)
-                            .padding(.top, 8)
-                        
-                        // Progress bar with segments
-                        HStack(spacing: 2) {
-                            ForEach(0..<15, id: \.self) { index in
-                                Rectangle()
-                                    .fill(Color(red: 0.2, green: 0.8, blue: 0.2))
-                                    .frame(height: 12)
-                            }
-                        }
-                        .padding(.horizontal, 8)
-                        .overlay(
-                            HStack {
-                                Circle()
-                                    .fill(Color.white)
-                                    .frame(width: 14, height: 14)
-                                Spacer()
-                                Circle()
-                                    .fill(Color.white)
-                                    .frame(width: 14, height: 14)
-                            }
-                            .padding(.horizontal, 4)
-                        )
-                    }
-                    
-                    // Gray placeholder bars (4 of them as in reference)
-                    VStack(spacing: 8) {
-                        ForEach(0..<4, id: \.self) { _ in
-                            RoundedRectangle(cornerRadius: 4)
-                                .fill(Color(white: 0.35))
-                                .frame(height: 20)
-                        }
-                    }
-                    .padding(.top, 12)
-                }
-                .padding(20)
-                .background(Color(white: 0.15))
-                .cornerRadius(16)
-                .padding(.horizontal, 16)
-            }
-            
-            // Nodule Morphology Row
-            FleischnerSettingsRow(
-                title: "Nodule Morphology",
-                hasInfo: true,
-                onInfoTap: { showMorphologyInfo = true },
-                trailing: {
-                    Menu {
-                        ForEach(NoduleType.allCases) { type in
-                            Button(type.rawValue) {
-                                viewModel.input.noduleType = type
-                            }
-                        }
-                    } label: {
-                        HStack(spacing: 4) {
-                            Text(viewModel.input.noduleType.rawValue)
-                                .foregroundColor(Color(red: 0.2, green: 0.8, blue: 0.2))
-                            Image(systemName: "chevron.up.chevron.down")
-                                .font(.caption)
-                                .foregroundColor(Color(red: 0.2, green: 0.8, blue: 0.2))
-                        }
-                    }
-                }
-            )
-            
-            // Nodule Size Row
-            FleischnerSettingsRow(
-                title: "Nodule Size",
-                hasInfo: true,
-                onInfoTap: { showSizeInfo = true },
-                trailing: {
-                    HStack(spacing: 6) {
-                        TextField("mm", text: $viewModel.sizeText)
-                            .keyboardType(.decimalPad)
-                            .multilineTextAlignment(.trailing)
-                            .foregroundColor(Color(red: 0.2, green: 0.8, blue: 0.2))
-                            .frame(width: 70)
-                            .focused($focusedField, equals: .size)
-                        Text("mm")
-                            .foregroundColor(.gray)
-                    }
-                }
-            )
+            resultCard
+            morphologyRow
+            sizeSection
             
             // High Risk Patient Row
             FleischnerSettingsRow(
@@ -231,6 +115,202 @@ struct FleischnerView: View {
             Button("OK", role: .cancel) { }
         } message: {
             Text("For part-solid nodules, measure the solid component on lung windows. The solid component size determines management recommendations.")
+        }
+    }
+
+    @ViewBuilder
+    private var resultCard: some View {
+        if let result = viewModel.result {
+            VStack(spacing: 12) {
+                Text(primaryRecommendation(from: result.recommendation))
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundColor(.white)
+
+                GeometryReader { geo in
+                    ZStack(alignment: .leading) {
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(Color(white: 0.3))
+                            .frame(height: 8)
+
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(Color(red: 0.2, green: 0.8, blue: 0.2))
+                            .frame(width: progressWidth(for: result.recommendation, in: geo.size.width), height: 8)
+
+                        Circle()
+                            .fill(Color.white)
+                            .frame(width: 16, height: 16)
+                            .offset(x: knobOffset(for: result.recommendation, in: geo.size.width, isStart: true))
+
+                        Circle()
+                            .fill(Color.white)
+                            .frame(width: 16, height: 16)
+                            .offset(x: knobOffset(for: result.recommendation, in: geo.size.width, isStart: false))
+                    }
+                }
+                .frame(height: 20)
+                .padding(.horizontal, 8)
+
+                if hasSecondaryRecommendation(result.recommendation) {
+                    Text(secondaryRecommendation(from: result.recommendation))
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(.white)
+                        .padding(.top, 8)
+
+                    HStack(spacing: 2) {
+                        ForEach(0..<15, id: \.self) { _ in
+                            Rectangle()
+                                .fill(Color(red: 0.2, green: 0.8, blue: 0.2))
+                                .frame(height: 12)
+                        }
+                    }
+                    .padding(.horizontal, 8)
+                    .overlay(
+                        HStack {
+                            Circle()
+                                .fill(Color.white)
+                                .frame(width: 14, height: 14)
+                            Spacer()
+                            Circle()
+                                .fill(Color.white)
+                                .frame(width: 14, height: 14)
+                        }
+                        .padding(.horizontal, 4)
+                    )
+                }
+
+                VStack(spacing: 8) {
+                    ForEach(0..<4, id: \.self) { _ in
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(Color(white: 0.35))
+                            .frame(height: 20)
+                    }
+                }
+                .padding(.top, 12)
+            }
+            .padding(20)
+            .background(Color(white: 0.15))
+            .cornerRadius(16)
+            .padding(.horizontal, 16)
+        }
+    }
+
+    private var morphologyRow: some View {
+        FleischnerSettingsRow(
+            title: "Nodule Morphology",
+            hasInfo: true,
+            onInfoTap: { showMorphologyInfo = true },
+            trailing: {
+                Menu {
+                    ForEach(NoduleType.allCases) { type in
+                        Button(type.rawValue) {
+                            viewModel.input.noduleType = type
+                        }
+                    }
+                } label: {
+                    HStack(spacing: 4) {
+                        Text(viewModel.input.noduleType.rawValue)
+                            .foregroundColor(Color(red: 0.2, green: 0.8, blue: 0.2))
+                        Image(systemName: "chevron.up.chevron.down")
+                            .font(.caption)
+                            .foregroundColor(Color(red: 0.2, green: 0.8, blue: 0.2))
+                    }
+                }
+            }
+        )
+    }
+
+    private var sizeSection: some View {
+        VStack(spacing: 16) {
+            sizeRow
+            axisToggleRow
+            axisRows
+            roundingNote
+        }
+    }
+
+    private var sizeRow: some View {
+        FleischnerSettingsRow(
+            title: "Nodule Size",
+            hasInfo: true,
+            onInfoTap: { showSizeInfo = true },
+            trailing: {
+                if viewModel.useAxisMeasurements {
+                    HStack(spacing: 6) {
+                        Text(viewModel.axisMeanDisplay)
+                            .foregroundColor(Color(red: 0.2, green: 0.8, blue: 0.2))
+                        Text("mm")
+                            .foregroundColor(.gray)
+                    }
+                } else {
+                    HStack(spacing: 6) {
+                        TextField("mm", text: $viewModel.sizeText)
+                            .keyboardType(.decimalPad)
+                            .multilineTextAlignment(.trailing)
+                            .foregroundColor(Color(red: 0.2, green: 0.8, blue: 0.2))
+                            .frame(width: 70)
+                            .focused($focusedField, equals: .size)
+                        Text("mm")
+                            .foregroundColor(.gray)
+                    }
+                }
+            }
+        )
+    }
+
+    private var axisToggleRow: some View {
+        FleischnerSettingsRow(
+            title: "Use long/short axes",
+            trailing: {
+                Toggle("", isOn: $viewModel.useAxisMeasurements)
+                    .labelsHidden()
+            }
+        )
+    }
+
+    @ViewBuilder
+    private var axisRows: some View {
+        if viewModel.useAxisMeasurements {
+            FleischnerSettingsRow(
+                title: "Long axis",
+                trailing: {
+                    HStack(spacing: 6) {
+                        TextField("mm", text: $viewModel.longAxisText)
+                            .keyboardType(.decimalPad)
+                            .multilineTextAlignment(.trailing)
+                            .foregroundColor(Color(red: 0.2, green: 0.8, blue: 0.2))
+                            .frame(width: 70)
+                            .focused($focusedField, equals: .longAxis)
+                        Text("mm")
+                            .foregroundColor(.gray)
+                    }
+                }
+            )
+
+            FleischnerSettingsRow(
+                title: "Short axis",
+                trailing: {
+                    HStack(spacing: 6) {
+                        TextField("mm", text: $viewModel.shortAxisText)
+                            .keyboardType(.decimalPad)
+                            .multilineTextAlignment(.trailing)
+                            .foregroundColor(Color(red: 0.2, green: 0.8, blue: 0.2))
+                            .frame(width: 70)
+                            .focused($focusedField, equals: .shortAxis)
+                        Text("mm")
+                            .foregroundColor(.gray)
+                    }
+                }
+            )
+        }
+    }
+
+    @ViewBuilder
+    private var roundingNote: some View {
+        if let roundingMessage = viewModel.roundingMessage {
+            Text(roundingMessage)
+                .font(.caption)
+                .foregroundColor(.gray)
+                .padding(.horizontal, 16)
         }
     }
     
