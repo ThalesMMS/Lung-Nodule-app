@@ -7,6 +7,9 @@ struct FleischnerView: View {
     @State private var showRiskInfo = false
     @State private var showMultipleInfo = false
     @State private var showSolidComponentInfo = false
+    @State private var highRiskSmokingHistory = false
+    @State private var highRiskExposure = false
+    @State private var highRiskFamilyHistory = false
     @FocusState private var focusedField: FocusField?
 
     private enum FocusField {
@@ -31,7 +34,14 @@ struct FleischnerView: View {
                 trailing: {
                     Toggle("", isOn: Binding(
                         get: { viewModel.input.risk == .high },
-                        set: { viewModel.input.risk = $0 ? .high : .low }
+                        set: { isHighRisk in
+                            viewModel.input.risk = isHighRisk ? .high : .low
+                            if !isHighRisk {
+                                highRiskSmokingHistory = false
+                                highRiskExposure = false
+                                highRiskFamilyHistory = false
+                            }
+                        }
                     ))
                     .labelsHidden()
                 }
@@ -84,6 +94,9 @@ struct FleischnerView: View {
         .onChange(of: viewModel.input.risk) { _, _ in viewModel.calculate() }
         .onChange(of: viewModel.input.isMultiple) { _, _ in viewModel.calculate() }
         .onChange(of: viewModel.input.solidComponentSize) { _, _ in viewModel.calculate() }
+        .onChange(of: highRiskSmokingHistory) { _, _ in updateHighRiskFromChecklist() }
+        .onChange(of: highRiskExposure) { _, _ in updateHighRiskFromChecklist() }
+        .onChange(of: highRiskFamilyHistory) { _, _ in updateHighRiskFromChecklist() }
         .toolbar {
             ToolbarItemGroup(placement: .keyboard) {
                 Spacer()
@@ -101,10 +114,16 @@ struct FleischnerView: View {
         } message: {
             Text("< 3 mm: Do not measure (use \"micronodule\" descriptor).\n\n3–10 mm: Report the average diameter = (long-axis + short-axis) / 2.\n\n≥ 10 mm: Report both long-axis and short-axis measurements.\n\nBoth measurements and averages should be expressed to the nearest whole millimeter.\n\nFor further guidance, tap the \"Common Issues\" (info circle icon) in the top-left corner of the app, then tap \"Measuring Nodules.\"")
         }
-        .alert("High Risk", isPresented: $showRiskInfo) {
-            Button("OK", role: .cancel) { }
-        } message: {
-            Text("Patients at high risk include those with a smoking history, exposure to asbestos/radon/uranium, or having a first degree relative with history of lung cancer")
+        .sheet(isPresented: $showRiskInfo) {
+            FleischnerHighRiskChecklistView(
+                isHighRisk: Binding(
+                    get: { viewModel.input.risk == .high },
+                    set: { viewModel.input.risk = $0 ? .high : .low }
+                ),
+                smokingHistory: $highRiskSmokingHistory,
+                exposureHistory: $highRiskExposure,
+                familyHistory: $highRiskFamilyHistory
+            )
         }
         .alert("Multiple Nodules", isPresented: $showMultipleInfo) {
             Button("OK", role: .cancel) { }
@@ -116,6 +135,11 @@ struct FleischnerView: View {
         } message: {
             Text("For part-solid nodules, measure the solid component on lung windows. The solid component size determines management recommendations.")
         }
+    }
+
+    private func updateHighRiskFromChecklist() {
+        let isHighRisk = highRiskSmokingHistory || highRiskExposure || highRiskFamilyHistory
+        viewModel.input.risk = isHighRisk ? .high : .low
     }
 
     @ViewBuilder
@@ -356,6 +380,81 @@ struct FleischnerView: View {
         }
     }
     
+}
+
+struct FleischnerHighRiskChecklistView: View {
+    @Environment(\.dismiss) private var dismiss
+    @Binding var isHighRisk: Bool
+    @Binding var smokingHistory: Bool
+    @Binding var exposureHistory: Bool
+    @Binding var familyHistory: Bool
+
+    private let greenAccent = Color(red: 0.2, green: 0.8, blue: 0.2)
+
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 16) {
+                Text("Select any risk factor that applies. The High Risk toggle will update automatically.")
+                    .font(.subheadline)
+                    .foregroundColor(.gray)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 16)
+
+                VStack(spacing: 0) {
+                    toggleRow(
+                        title: "Smoking history",
+                        isOn: $smokingHistory
+                    )
+
+                    Divider().background(Color(white: 0.3))
+
+                    toggleRow(
+                        title: "Asbestos/radon/uranium exposure",
+                        isOn: $exposureHistory
+                    )
+
+                    Divider().background(Color(white: 0.3))
+
+                    toggleRow(
+                        title: "First-degree relative with lung cancer",
+                        isOn: $familyHistory
+                    )
+                }
+                .background(Color(white: 0.15))
+                .cornerRadius(12)
+                .padding(.horizontal, 16)
+
+                Spacer()
+            }
+            .padding(.top, 16)
+            .navigationTitle("High Risk Checklist")
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") { dismiss() }
+                        .foregroundColor(greenAccent)
+                }
+            }
+            .onAppear { updateRisk() }
+            .onChange(of: smokingHistory) { _, _ in updateRisk() }
+            .onChange(of: exposureHistory) { _, _ in updateRisk() }
+            .onChange(of: familyHistory) { _, _ in updateRisk() }
+        }
+    }
+
+    private func toggleRow(title: String, isOn: Binding<Bool>) -> some View {
+        HStack {
+            Text(title)
+                .foregroundColor(.white)
+            Spacer()
+            Toggle("", isOn: isOn)
+                .labelsHidden()
+        }
+        .padding()
+    }
+
+    private func updateRisk() {
+        isHighRisk = smokingHistory || exposureHistory || familyHistory
+    }
 }
 
 // Reusable settings row component for Fleischner (green accent)

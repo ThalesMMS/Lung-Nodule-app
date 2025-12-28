@@ -19,6 +19,10 @@ struct LungRADSView: View {
         case solidComponent
         case longAxis
         case shortAxis
+        case volume
+        case priorSize
+        case age
+        case quitYears
     }
 
     var onBrockRequest: ((LungRADSInput) -> Void)? = nil
@@ -78,6 +82,8 @@ struct LungRADSView: View {
     // MARK: - Input Fields Section
     @ViewBuilder
     private var inputFieldsSection: some View {
+        eligibilitySection
+        eligibilityNotice
         ctStatusRow
         morphologyRow
         juxtapleuralMorphologyRow
@@ -86,10 +92,75 @@ struct LungRADSView: View {
         inflammatoryFindingsRow
         atelectasisRow
         sizeRow
+        volumeMeasurementSection
         axisMeasurementSection
         solidComponentRow
         noduleStatusRow
+        growthCalculatorSection
         suspiciousFeaturesRow
+    }
+
+    // MARK: - Eligibility Section
+    @ViewBuilder
+    private var eligibilitySection: some View {
+        LungRADSSettingsRow(
+            title: "Patient Age",
+            accentColor: blueAccent,
+            trailing: {
+                HStack(spacing: 6) {
+                    TextField("yrs", text: $viewModel.ageText)
+                        .keyboardType(.numberPad)
+                        .multilineTextAlignment(.trailing)
+                        .foregroundColor(blueAccent)
+                        .frame(width: 70)
+                        .focused($focusedField, equals: .age)
+                    Text("yrs")
+                        .foregroundColor(.gray)
+                }
+            }
+        )
+
+        LungRADSSettingsRow(
+            title: "Current Smoker",
+            accentColor: blueAccent,
+            trailing: {
+                Toggle("", isOn: $viewModel.isCurrentSmoker)
+                    .labelsHidden()
+            }
+        )
+
+        if !viewModel.isCurrentSmoker {
+            LungRADSSettingsRow(
+                title: "Years Since Quit",
+                accentColor: blueAccent,
+                trailing: {
+                    HStack(spacing: 6) {
+                        TextField("yrs", text: $viewModel.yearsSinceQuitText)
+                            .keyboardType(.numberPad)
+                            .multilineTextAlignment(.trailing)
+                            .foregroundColor(blueAccent)
+                            .frame(width: 70)
+                            .focused($focusedField, equals: .quitYears)
+                        Text("yrs")
+                            .foregroundColor(.gray)
+                    }
+                }
+            )
+        }
+    }
+
+    @ViewBuilder
+    private var eligibilityNotice: some View {
+        if let notice = viewModel.eligibilityNotice {
+            Text(notice)
+                .font(.footnote)
+                .foregroundColor(.orange)
+                .multilineTextAlignment(.leading)
+                .padding()
+                .background(Color(white: 0.15))
+                .cornerRadius(12)
+                .padding(.horizontal, 16)
+        }
     }
     
     // MARK: - CT Status Row
@@ -224,6 +295,21 @@ struct LungRADSView: View {
     private var sizeRow: some View {
         if viewModel.input.noduleType == .airway {
             airwayLocationRow
+        } else if viewModel.useVolumeMeasurements {
+            LungRADSSettingsRow(
+                title: "Equivalent Diameter",
+                hasInfo: true,
+                accentColor: blueAccent,
+                onInfoTap: { showSizeInfo = true },
+                trailing: {
+                    HStack(spacing: 6) {
+                        Text(viewModel.volumeEquivalentDisplay)
+                            .foregroundColor(blueAccent)
+                        Text("mm")
+                            .foregroundColor(.gray)
+                    }
+                }
+            )
         } else {
             LungRADSSettingsRow(
                 title: "Nodule Size",
@@ -256,8 +342,41 @@ struct LungRADSView: View {
     }
 
     @ViewBuilder
-    private var axisMeasurementSection: some View {
+    private var volumeMeasurementSection: some View {
         if viewModel.input.noduleType != .airway {
+            LungRADSSettingsRow(
+                title: "Use volume (mm3)",
+                accentColor: blueAccent,
+                trailing: {
+                    Toggle("", isOn: $viewModel.useVolumeMeasurements)
+                        .labelsHidden()
+                }
+            )
+
+            if viewModel.useVolumeMeasurements {
+                LungRADSSettingsRow(
+                    title: "Volume",
+                    accentColor: blueAccent,
+                    trailing: {
+                        HStack(spacing: 6) {
+                            TextField("mm3", text: $viewModel.volumeText)
+                                .keyboardType(.decimalPad)
+                                .multilineTextAlignment(.trailing)
+                                .foregroundColor(blueAccent)
+                                .frame(width: 90)
+                                .focused($focusedField, equals: .volume)
+                            Text("mm3")
+                                .foregroundColor(.gray)
+                        }
+                    }
+                )
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var axisMeasurementSection: some View {
+        if viewModel.input.noduleType != .airway && !viewModel.useVolumeMeasurements {
             LungRADSSettingsRow(
                 title: "Use long/short axes",
                 accentColor: blueAccent,
@@ -370,8 +489,83 @@ struct LungRADSView: View {
                             }
                         }
                     )
+                    .disabled(viewModel.useGrowthCalculator)
                 }
             )
+        }
+    }
+
+    @ViewBuilder
+    private var growthCalculatorSection: some View {
+        if viewModel.input.ctStatus == .followUp {
+            LungRADSSettingsRow(
+                title: "Use growth calculator",
+                accentColor: blueAccent,
+                trailing: {
+                    Toggle("", isOn: $viewModel.useGrowthCalculator)
+                        .labelsHidden()
+                }
+            )
+
+            if viewModel.useGrowthCalculator {
+                LungRADSSettingsRow(
+                    title: "Current size",
+                    accentColor: blueAccent,
+                    trailing: {
+                        HStack(spacing: 6) {
+                            Text(viewModel.currentSizeDisplay)
+                                .foregroundColor(blueAccent)
+                            Text("mm")
+                                .foregroundColor(.gray)
+                        }
+                    }
+                )
+
+                LungRADSSettingsRow(
+                    title: "Prior size",
+                    accentColor: blueAccent,
+                    trailing: {
+                        HStack(spacing: 6) {
+                            TextField("mm", text: $viewModel.priorSizeText)
+                                .keyboardType(.decimalPad)
+                                .multilineTextAlignment(.trailing)
+                                .foregroundColor(blueAccent)
+                                .frame(width: 70)
+                                .focused($focusedField, equals: .priorSize)
+                            Text("mm")
+                                .foregroundColor(.gray)
+                        }
+                    }
+                )
+
+                LungRADSSettingsRow(
+                    title: "Prior date",
+                    accentColor: blueAccent,
+                    trailing: {
+                        DatePicker("", selection: $viewModel.priorDate, displayedComponents: .date)
+                            .datePickerStyle(.compact)
+                            .labelsHidden()
+                    }
+                )
+
+                LungRADSSettingsRow(
+                    title: "Current date",
+                    accentColor: blueAccent,
+                    trailing: {
+                        DatePicker("", selection: $viewModel.currentDate, displayedComponents: .date)
+                            .datePickerStyle(.compact)
+                            .labelsHidden()
+                    }
+                )
+
+                if let summary = viewModel.growthSummary {
+                    Text(summary)
+                        .font(.footnote)
+                        .foregroundColor(.gray)
+                        .multilineTextAlignment(.leading)
+                        .padding(.horizontal, 20)
+                }
+            }
         }
     }
     
@@ -693,7 +887,7 @@ struct LungRADSAlerts: ViewModifier {
             .alert("Nodule Morphology", isPresented: $showMorphologyInfo) {
                 Button("OK", role: .cancel) { }
             } message: {
-                Text("No lung nodule = Lung-RADS 1")
+                Text("No lung nodule = Lung-RADS 1\nJuxtapleural includes costal, perimediastinal, and peridiaphragmatic locations.")
             }
             .alert("Benign Calcification Pattern", isPresented: $showCalcificationInfo) {
                 Button("OK", role: .cancel) { }
@@ -708,7 +902,7 @@ struct LungRADSAlerts: ViewModifier {
             .alert("Nodule Status", isPresented: $showNoduleStatusInfo) {
                 Button("OK", role: .cancel) { }
             } message: {
-                Text("• Stable: No significant change from prior\n• New: Not present on prior CT\n• Growing: > 1.5 mm increase in mean diameter\n• Slow Growing: GGO with gradual increase\n• Resolved: Previously seen nodule no longer present")
+                Text("• Stable: No significant change from prior\n• New: Not present on prior CT\n• Growing: > 1.5 mm increase in mean diameter within 12 months\n• Slow Growing: GGO with gradual increase\n• Resolved: Previously seen nodule no longer present\n\nFor shorter intervals, smaller changes may be clinically significant; volumetric assessment is encouraged.")
             }
             .alert("Solid Component", isPresented: $showSolidComponentInfo) {
                 Button("OK", role: .cancel) { }

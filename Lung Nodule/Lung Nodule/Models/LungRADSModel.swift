@@ -146,7 +146,7 @@ enum NoduleStatus: String, CaseIterable, Identifiable {
     case baseline = "Baseline (no prior)"
     case stable = "Stable"
     case newNodule = "New"
-    case growing = "Growing (> 1.5 mm increase)"
+    case growing = "Growing (> 1.5 mm increase within 12 months)"
     case slowGrowing = "Slow Growing (GGO)"
     case resolved = "Resolved"
     
@@ -160,11 +160,29 @@ enum AirwayLocation: String, CaseIterable, Identifiable {
     var id: String { self.rawValue }
 }
 
+struct LungRADSVolumeConverter {
+    static func equivalentDiameter(_ volumeMm3: Double) -> Double {
+        guard volumeMm3 > 0 else { return 0 }
+        return pow((6.0 * volumeMm3) / Double.pi, 1.0 / 3.0)
+    }
+
+    static func volumeFromDiameter(_ diameterMm: Double) -> Double {
+        guard diameterMm > 0 else { return 0 }
+        return (Double.pi / 6.0) * pow(diameterMm, 3)
+    }
+
+    static func normalizeDiameter(_ diameterMm: Double) -> Double {
+        (diameterMm * 10).rounded(.toNearestOrAwayFromZero) / 10
+    }
+}
+
 struct LungRADSInput {
     var noduleType: LungRADSNoduleType = .solid
     var sizeCategory: LungRADSSize = .lessThanFour
     var solidComponentSize: LungRADSSolidComponentSize = .none
     var sizeMm: Double? = nil
+    var useVolume: Bool = false
+    var volumeMm3: Double? = nil
     var solidComponentMm: Double? = nil
     var airwayLocation: AirwayLocation = .subsegmental
     var ctStatus: CTStatus = .baseline
@@ -195,6 +213,10 @@ struct LungRADSInput {
     }
 
     var sizeValue: Double {
+        if useVolume, let volumeMm3, volumeMm3 > 0 {
+            let diameter = LungRADSVolumeConverter.equivalentDiameter(volumeMm3)
+            return LungRADSVolumeConverter.normalizeDiameter(diameter)
+        }
         if let sizeMm, sizeMm > 0 {
             return sizeMm
         }
@@ -671,6 +693,8 @@ struct LungRADSCalculator {
             sizeCategory: input.sizeCategory,
             solidComponentSize: input.solidComponentSize,
             sizeMm: input.sizeMm,
+            useVolume: input.useVolume,
+            volumeMm3: input.volumeMm3,
             solidComponentMm: input.solidComponentMm,
             airwayLocation: input.airwayLocation,
             ctStatus: input.ctStatus,

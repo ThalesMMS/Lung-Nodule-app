@@ -221,13 +221,13 @@ struct FleischnerCalculator {
                 return FleischnerRecommendation(
                     recommendation: "CT at 3-6 months, then consider CT at 18-24 months.",
                     followUpInterval: "3-6 months",
-                    additionalNotes: "Use size of the largest (dominant) nodule. Second follow-up at 18-24 months is optional in low-risk if stable."
+                    additionalNotes: "Use the most suspicious nodule as a guide. The dominant/most suspicious nodule may not necessarily be the largest. Second follow-up at 18-24 months is optional in low-risk if stable."
                 )
             } else {
                 return FleischnerRecommendation(
                     recommendation: "CT at 3-6 months, then CT at 18-24 months.",
                     followUpInterval: "3-6 months",
-                    additionalNotes: "Use size of the largest (dominant) nodule. Both follow-ups recommended for high-risk patients."
+                    additionalNotes: "Use the most suspicious nodule as a guide. The dominant/most suspicious nodule may not necessarily be the largest. Both follow-ups recommended for high-risk patients."
                 )
             }
         }

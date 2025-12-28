@@ -7,6 +7,7 @@
 
 import Testing
 @testable import Lung_Nodule
+import Foundation
 
 // MARK: - Fleischner Calculator Tests
 
@@ -750,6 +751,7 @@ struct LungRADSCalculatorTests {
     @Test func airwayNoduleSegmentalBaselineReturnsCategory4A() async throws {
         var input = LungRADSInput()
         input.noduleType = .airway
+        input.airwayLocation = .segmentalOrProximal
         input.sizeCategory = .fourToSix
         input.ctStatus = .baseline
 
@@ -766,13 +768,15 @@ struct LungRADSCalculatorTests {
 
         let result = LungRADSCalculator.calculate(input: input)
         #expect(result.category == .cat2)
-        #expect(result.additionalNotes?.contains("atelectasis") == true)
+        let notes = result.additionalNotes?.lowercased() ?? ""
+        #expect(notes.contains("atelectasis"))
     }
 
     /// Per Lung-RADS v2022: Persistent segmental/proximal airway nodules at follow-up = 4B
     @Test func airwayNoduleSegmentalStableFollowUpReturnsCategory4B() async throws {
         var input = LungRADSInput()
         input.noduleType = .airway
+        input.airwayLocation = .segmentalOrProximal
         input.sizeCategory = .fourToSix
         input.ctStatus = .followUp
         input.noduleStatus = .stable
@@ -785,6 +789,7 @@ struct LungRADSCalculatorTests {
     @Test func airwayNoduleSegmentalGrowingFollowUpReturnsCategory4B() async throws {
         var input = LungRADSInput()
         input.noduleType = .airway
+        input.airwayLocation = .segmentalOrProximal
         input.sizeCategory = .fourToSix
         input.ctStatus = .followUp
         input.noduleStatus = .growing
@@ -1436,6 +1441,7 @@ struct LungRADSEdgeCaseTests {
     @Test func L053_baselineJuxtapleural9_9mm() async throws {
         var input = LungRADSInput()
         input.noduleType = .juxtapleural
+        input.hasBenignJuxtapleuralMorphology = true
         input.sizeCategory = .sixToEight  // Maps to <10mm for juxtapleural
         input.ctStatus = .baseline
         
@@ -1473,9 +1479,10 @@ struct LungRADSEdgeCaseTests {
     @Test func L058_baselineAirwaySegmental() async throws {
         var input = LungRADSInput()
         input.noduleType = .airway
+        input.airwayLocation = .segmentalOrProximal
         input.sizeCategory = .fourToSix
         input.ctStatus = .baseline
-        
+
         let result = LungRADSCalculator.calculate(input: input)
         #expect(result.category == .cat4A)
     }
@@ -1616,5 +1623,65 @@ struct LungRADSEdgeCaseTests {
         let result = LungRADSCalculator.calculate(input: input)
         #expect(result.category == .cat3)
         #expect(result.isReclassified == true)
+    }
+}
+
+// MARK: - Rounding Edge Case Tests
+
+@MainActor
+struct RoundingEdgeCaseTests {
+    @Test func fleischnerRoundsPointFiveUp() async throws {
+        let viewModel = FleischnerViewModel()
+        viewModel.sizeText = "8.5"
+        #expect(viewModel.roundedSizeMm == 9)
+        #expect(viewModel.input.sizeCategory == .greaterThanEight)
+    }
+
+    @Test func lungRadsRoundsToOneDecimal() async throws {
+        let viewModel = LungRADSViewModel()
+        viewModel.sizeText = "5.96"
+        let normalized = viewModel.input.sizeMm ?? 0
+        #expect(abs(normalized - 6.0) < 0.0001)
+    }
+}
+
+@MainActor
+struct VolumeEdgeCaseTests {
+    @Test func lungRadsBaselineVolume268ReturnsCategory4A() async throws {
+        var input = LungRADSInput()
+        input.noduleType = .solid
+        input.ctStatus = .baseline
+        input.useVolume = true
+        input.volumeMm3 = 268.0
+
+        let result = LungRADSCalculator.calculate(input: input)
+        #expect(result.category == .cat4A)
+    }
+}
+
+@MainActor
+struct GrowthCalculatorTests {
+    @Test func growthCalculatorSetsGrowingWithinTwelveMonths() async throws {
+        let viewModel = LungRADSViewModel()
+        viewModel.input.ctStatus = .followUp
+        viewModel.useGrowthCalculator = true
+        viewModel.sizeText = "7.2"
+        viewModel.priorSizeText = "5.4"
+        viewModel.priorDate = Date(timeIntervalSince1970: 0)
+        viewModel.currentDate = Date(timeIntervalSince1970: 60 * 60 * 24 * 200)
+        viewModel.calculate()
+        #expect(viewModel.input.noduleStatus == .growing)
+    }
+
+    @Test func growthCalculatorSetsStableWhenBelowThreshold() async throws {
+        let viewModel = LungRADSViewModel()
+        viewModel.input.ctStatus = .followUp
+        viewModel.useGrowthCalculator = true
+        viewModel.sizeText = "6.0"
+        viewModel.priorSizeText = "5.2"
+        viewModel.priorDate = Date(timeIntervalSince1970: 0)
+        viewModel.currentDate = Date(timeIntervalSince1970: 60 * 60 * 24 * 180)
+        viewModel.calculate()
+        #expect(viewModel.input.noduleStatus == .stable)
     }
 }
