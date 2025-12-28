@@ -348,6 +348,14 @@ struct BrockModelView: View {
     @State private var spiculation: Bool = false
     @State private var familyHistory: Bool = false
     @State private var emphysema: Bool = false
+    @FocusState private var focusedField: FocusField?
+    private let blueAccent = Color(red: 0.0, green: 0.478, blue: 1.0)
+
+    private enum FocusField {
+        case age
+        case size
+        case count
+    }
     
     var body: some View {
         VStack(spacing: 16) {
@@ -382,6 +390,7 @@ struct BrockModelView: View {
                             .multilineTextAlignment(.trailing)
                             .foregroundColor(.gray)
                             .frame(width: 60)
+                            .focused($focusedField, equals: .age)
                         Text("yrs")
                             .foregroundColor(.gray)
                     }
@@ -428,6 +437,7 @@ struct BrockModelView: View {
                             .multilineTextAlignment(.trailing)
                             .foregroundColor(.gray)
                             .frame(width: 60)
+                            .focused($focusedField, equals: .size)
                         Text("mm")
                             .foregroundColor(.gray)
                     }
@@ -474,6 +484,7 @@ struct BrockModelView: View {
                             .multilineTextAlignment(.trailing)
                             .foregroundColor(.gray)
                             .frame(width: 40)
+                            .focused($focusedField, equals: .count)
                     }
                     .padding()
                     
@@ -564,6 +575,13 @@ struct BrockModelView: View {
             .padding(.top, 8)
             
             Spacer()
+        }
+        .toolbar {
+            ToolbarItemGroup(placement: .keyboard) {
+                Spacer()
+                Button("Done") { focusedField = nil }
+                    .foregroundColor(blueAccent)
+            }
         }
     }
 

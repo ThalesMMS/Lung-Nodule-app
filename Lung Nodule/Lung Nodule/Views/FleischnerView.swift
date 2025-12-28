@@ -7,6 +7,12 @@ struct FleischnerView: View {
     @State private var showRiskInfo = false
     @State private var showMultipleInfo = false
     @State private var showSolidComponentInfo = false
+    @FocusState private var focusedField: FocusField?
+
+    private enum FocusField {
+        case size
+        case solidComponent
+    }
     
     var body: some View {
         VStack(spacing: 16) {
@@ -126,6 +132,7 @@ struct FleischnerView: View {
                             .multilineTextAlignment(.trailing)
                             .foregroundColor(Color(red: 0.2, green: 0.8, blue: 0.2))
                             .frame(width: 70)
+                            .focused($focusedField, equals: .size)
                         Text("mm")
                             .foregroundColor(.gray)
                     }
@@ -159,6 +166,7 @@ struct FleischnerView: View {
                                 .multilineTextAlignment(.trailing)
                                 .foregroundColor(Color(red: 0.2, green: 0.8, blue: 0.2))
                                 .frame(width: 70)
+                                .focused($focusedField, equals: .solidComponent)
                             Text("mm")
                                 .foregroundColor(.gray)
                         }
@@ -192,6 +200,13 @@ struct FleischnerView: View {
         .onChange(of: viewModel.input.risk) { _, _ in viewModel.calculate() }
         .onChange(of: viewModel.input.isMultiple) { _, _ in viewModel.calculate() }
         .onChange(of: viewModel.input.solidComponentSize) { _, _ in viewModel.calculate() }
+        .toolbar {
+            ToolbarItemGroup(placement: .keyboard) {
+                Spacer()
+                Button("Done") { focusedField = nil }
+                    .foregroundColor(Color(red: 0.2, green: 0.8, blue: 0.2))
+            }
+        }
         .alert("Nodule Morphology", isPresented: $showMorphologyInfo) {
             Button("OK", role: .cancel) { }
         } message: {

@@ -222,19 +222,22 @@ struct LungRADSResult {
     let probabilityOfMalignancy: String
     let additionalNotes: String?
     let isReclassified: Bool
+    let hasSModifier: Bool
     
     init(category: LungRADSCategory,
          baseCategory: LungRADSCategory? = nil,
          management: String,
          probabilityOfMalignancy: String? = nil,
          additionalNotes: String? = nil,
-         isReclassified: Bool = false) {
+         isReclassified: Bool = false,
+         hasSModifier: Bool = false) {
         self.category = category
         self.baseCategory = baseCategory
         self.management = management
         self.probabilityOfMalignancy = probabilityOfMalignancy ?? category.probabilityOfMalignancy
         self.additionalNotes = additionalNotes
         self.isReclassified = isReclassified
+        self.hasSModifier = hasSModifier
     }
 }
 
@@ -326,6 +329,10 @@ struct LungRADSCalculator {
 
         if input.isMultiple {
             result = applyMultipleNodulesNote(to: result)
+        }
+
+        if input.hasSModifierFindings {
+            result = applySModifier(to: result)
         }
         
         return result
@@ -474,17 +481,17 @@ struct LungRADSCalculator {
 
         // Growing part-solid nodules are suspicious regardless of baseline size
         if input.isGrowing {
-            if solidSize < 8 {
+            if solidSize < 4 {
                 return LungRADSResult(
                     category: .cat4A,
-                    management: "3-month LDCT; PET/CT may be used if ≥ 8mm.",
-                    additionalNotes: "Growing part-solid nodule with solid component < 8mm. Any growth is suspicious."
+                    management: "3-month LDCT.",
+                    additionalNotes: "Growing part-solid nodule with solid component < 4mm. Any growth is suspicious."
                 )
             }
             return LungRADSResult(
                 category: .cat4B,
                 management: "Chest CT with or without contrast, PET/CT and/or tissue sampling.",
-                additionalNotes: "Growing part-solid nodule with solid component ≥ 8mm. Very suspicious."
+                additionalNotes: "Growing part-solid nodule with solid component ≥ 4mm. Very suspicious."
             )
         }
 
@@ -722,8 +729,6 @@ struct LungRADSCalculator {
     // MARK: - Atypical Pulmonary Cyst (Lung-RADS v2022)
     
     private static func calculateAtypicalCyst(input: LungRADSInput) -> LungRADSResult {
-        let wallThickness = input.solidComponentValue
-        
         // Per Lung-RADS v2022:
         // - Baseline thick-walled (≥2mm) or multilocular cyst = Category 4A
         // - Growing wall thickness/nodularity = Category 4B
@@ -763,7 +768,8 @@ struct LungRADSCalculator {
             category: .cat4X,
             baseCategory: result.category,
             management: result.management + " Additional features increase suspicion for malignancy.",
-            additionalNotes: "Upgraded to 4X due to additional suspicious features (spiculation, lymphadenopathy, chest wall involvement, etc.)."
+            additionalNotes: "Upgraded to 4X due to additional suspicious features (spiculation, lymphadenopathy, chest wall involvement, etc.).",
+            hasSModifier: result.hasSModifier
         )
     }
 
@@ -781,7 +787,27 @@ struct LungRADSCalculator {
             management: result.management,
             probabilityOfMalignancy: result.probabilityOfMalignancy,
             additionalNotes: combinedNotes,
-            isReclassified: result.isReclassified
+            isReclassified: result.isReclassified,
+            hasSModifier: result.hasSModifier
+        )
+    }
+
+    private static func applySModifier(to result: LungRADSResult) -> LungRADSResult {
+        let note = "Modifier 'S' applied due to clinically significant incidental findings."
+        let combinedNotes: String
+        if let existingNotes = result.additionalNotes, !existingNotes.isEmpty {
+            combinedNotes = existingNotes + "\n\n" + note
+        } else {
+            combinedNotes = note
+        }
+        return LungRADSResult(
+            category: result.category,
+            baseCategory: result.baseCategory,
+            management: result.management,
+            probabilityOfMalignancy: result.probabilityOfMalignancy,
+            additionalNotes: combinedNotes,
+            isReclassified: result.isReclassified,
+            hasSModifier: true
         )
     }
 }

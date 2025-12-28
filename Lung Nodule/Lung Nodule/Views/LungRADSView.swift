@@ -10,8 +10,14 @@ struct LungRADSView: View {
     @State private var showNoduleStatusInfo = false
     @State private var showSolidComponentInfo = false
     @State private var showSuspiciousFeaturesInfo = false
+    @FocusState private var focusedField: FocusField?
     
     private let blueAccent = Color(red: 0.0, green: 0.478, blue: 1.0)
+
+    private enum FocusField {
+        case size
+        case solidComponent
+    }
     
     var body: some View {
         mainContent
@@ -30,6 +36,13 @@ struct LungRADSView: View {
                 showSolidComponentInfo: $showSolidComponentInfo,
                 showSuspiciousFeaturesInfo: $showSuspiciousFeaturesInfo
             ))
+            .toolbar {
+                ToolbarItemGroup(placement: .keyboard) {
+                    Spacer()
+                    Button("Done") { focusedField = nil }
+                        .foregroundColor(blueAccent)
+                }
+            }
     }
     
     private var mainContent: some View {
@@ -200,6 +213,7 @@ struct LungRADSView: View {
                             .multilineTextAlignment(.trailing)
                             .foregroundColor(blueAccent)
                             .frame(width: 70)
+                            .focused($focusedField, equals: .size)
                         Text("mm")
                             .foregroundColor(.gray)
                     }
@@ -244,6 +258,7 @@ struct LungRADSView: View {
                             .multilineTextAlignment(.trailing)
                             .foregroundColor(blueAccent)
                             .frame(width: 70)
+                            .focused($focusedField, equals: .solidComponent)
                         Text("mm")
                             .foregroundColor(.gray)
                     }
@@ -315,7 +330,7 @@ struct LungRADSResultCard: View {
             
             progressBar
             
-            Text(result.category.rawValue)
+            Text(categoryDisplay)
                 .font(.system(size: 120, weight: .bold))
                 .foregroundColor(Color(red: 0.2, green: 0.8, blue: 0.2))
                 .padding(.vertical, 8)
@@ -387,6 +402,10 @@ struct LungRADSResultCard: View {
             return "Prior CT Needed"
         }
         return "LDCT"
+    }
+
+    private var categoryDisplay: String {
+        result.category.rawValue + (result.hasSModifier ? "S" : "")
     }
 }
 
