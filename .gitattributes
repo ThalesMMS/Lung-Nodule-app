@@ -1,2 +1,7 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+Lung-Nodule/Lung\ NoduleTests/** linguist-vendored
+Lung-Nodule/Lung NoduleTests/** linguist-vendored
+Lung-Nodule/Lung\ NoduleUITests/** linguist-vendored
+Lung-Nodule/Lung NoduleUITests/** linguist-vendored
