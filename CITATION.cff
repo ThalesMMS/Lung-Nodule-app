@@ -1,0 +1,18 @@
+cff-version: 1.2.0
+message: "If you use this software in academic or educational work, please cite it using the metadata below."
+title: "Lung Nodule"
+type: software
+authors:
+  - family-names: "Santos"
+    given-names: "Thales Matheus Mendonça"
+repository-code: "https://github.com/ThalesMMS/Lung-Nodule-app"
+url: "https://github.com/ThalesMMS/Lung-Nodule-app"
+license: "MIT"
+abstract: "SwiftUI iOS app with rule-based lung nodule calculator and reference workflows based on Fleischner 2017 and ACR Lung-RADS v2022 guidance for educational, reference, and research/prototyping use."
+keywords:
+  - "lung nodule"
+  - "radiology"
+  - "swiftui"
+  - "fleischner"
+  - "lung-rads"
+  - "medical education"
