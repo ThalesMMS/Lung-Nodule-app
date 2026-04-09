@@ -51,21 +51,22 @@ Then in Xcode:
 3. Build & Run.
 
 ## Reproducibility checklist
-To verify the project structure and re-run the calculator tests from a clean clone:
+To verify the project structure and re-run the calculator tests from a clean clone, substitute a compatible simulator name and iOS version if your Xcode installation does not include the example destination shown below:
 
 ```bash
 # Confirm that Xcode sees the project and scheme
 xcodebuild -list -project "Lung Nodule/Lung Nodule.xcodeproj"
 
 # Run tests on a compatible iOS Simulator runtime
+# Replace the simulator name/OS with one available in your local Xcode setup.
 xcodebuild \
   -project "Lung Nodule/Lung Nodule.xcodeproj" \
   -scheme "Lung Nodule" \
-  -destination 'platform=iOS Simulator,name=iPhone 15' \
+  -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
   test
 ```
 
-If `xcodebuild` reports that the required iOS platform/runtime is missing, install it from **Xcode → Settings → Components** and rerun the command.
+If `xcodebuild` reports that the required iOS platform/runtime is missing, install it from **Xcode → Settings → Components** and rerun the command. If your machine does not offer `iPhone 16`, replace it with any compatible simulator name and OS version shown by Xcode or `xcrun simctl list devices available`.
 
 ## Expected input/output examples
 These examples are meant to make the app behavior easier to verify against the current source code and tests.
