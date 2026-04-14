@@ -1685,3 +1685,40 @@ struct GrowthCalculatorTests {
         #expect(viewModel.input.noduleStatus == .stable)
     }
 }
+
+@MainActor
+struct LungRADSInputValidationTests {
+    @Test func emptyLungRADSFormDoesNotProduceRecommendation() async throws {
+        let viewModel = LungRADSViewModel()
+        viewModel.calculate()
+
+        #expect(viewModel.result == nil)
+    }
+
+    @Test func noNoduleStillCalculatesWithoutMeasurements() async throws {
+        let viewModel = LungRADSViewModel()
+        viewModel.input.noduleType = .noNodule
+        viewModel.calculate()
+
+        #expect(viewModel.result?.category == .cat1)
+    }
+
+    @Test func partSolidRequiresSolidComponentMeasurement() async throws {
+        let viewModel = LungRADSViewModel()
+        viewModel.input.noduleType = .partSolid
+        viewModel.sizeText = "8.0"
+        viewModel.calculate()
+
+        #expect(viewModel.result == nil)
+    }
+
+    @Test func partSolidWithInvalidSolidComponentTextDoesNotProduceRecommendation() async throws {
+        let viewModel = LungRADSViewModel()
+        viewModel.input.noduleType = .partSolid
+        viewModel.sizeText = "8.0"
+        viewModel.solidComponentText = "abc"
+        viewModel.calculate()
+
+        #expect(viewModel.result == nil)
+    }
+}

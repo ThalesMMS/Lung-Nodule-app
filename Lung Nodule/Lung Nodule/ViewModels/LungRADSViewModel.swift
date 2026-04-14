@@ -107,6 +107,10 @@ class LungRADSViewModel: ObservableObject {
     
     func calculate() {
         updateGrowthStatus()
+        guard hasRequiredInputsForCalculation else {
+            result = nil
+            return
+        }
         result = LungRADSCalculator.calculate(input: input)
     }
     
@@ -163,7 +167,9 @@ class LungRADSViewModel: ObservableObject {
         guard let volumeValue = parseRawDouble(volumeText),
               volumeValue > 0 else {
             input.volumeMm3 = nil
+            input.sizeMm = nil
             volumeEquivalentMm = nil
+            updateGrowthStatus()
             return
         }
         let diameter = LungRADSVolumeConverter.equivalentDiameter(volumeValue)
@@ -239,5 +245,49 @@ class LungRADSViewModel: ObservableObject {
         } else {
             growthSummary = "Delta \(deltaText) mm in \(monthsText) months -> Interval > 12 months. Review manually."
         }
+    }
+
+    private var hasRequiredInputsForCalculation: Bool {
+        if hasShortcutCategorization {
+            return true
+        }
+
+        guard hasPrimaryMeasurement else {
+            return false
+        }
+
+        switch input.noduleType {
+        case .partSolid, .atypicalCyst:
+            return hasSolidComponentMeasurement
+        default:
+            return true
+        }
+    }
+
+    private var hasShortcutCategorization: Bool {
+        input.ctStatus == .incomplete ||
+        input.ctStatus == .awaitingComparison ||
+        input.noduleType == .noNodule ||
+        input.hasInflammatoryFindings ||
+        input.hasBenignCalcification ||
+        input.hasMacroscopicFat ||
+        input.noduleType == .airway ||
+        input.noduleStatus == .resolved
+    }
+
+    private var hasPrimaryMeasurement: Bool {
+        if useVolumeMeasurements {
+            return input.volumeMm3 != nil
+        }
+        if useAxisMeasurements {
+            return axisMeanMm != nil
+        }
+        return input.sizeMm != nil
+    }
+
+    private var hasSolidComponentMeasurement: Bool {
+        let normalized = solidComponentText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !normalized.isEmpty else { return false }
+        return input.solidComponentMm != nil
     }
 }

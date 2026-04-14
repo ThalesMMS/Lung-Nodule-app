@@ -4,6 +4,23 @@ SwiftUI iOS app for lung nodule guideline calculators and reference screens.
 
 It currently focuses on **Fleischner Society 2017** incidental pulmonary nodule follow-up logic and **ACR Lung-RADS v2022** screening workflows. The project is positioned for **educational, reference, and research/prototyping use** rather than autonomous clinical use.
 
+## 30-second quickstart
+```bash
+git clone https://github.com/ThalesMMS/Lung-Nodule-app.git
+cd Lung-Nodule-app
+open "Lung Nodule/Lung Nodule.xcodeproj"
+```
+
+Then in Xcode:
+1. Select the `Lung Nodule` scheme.
+2. Choose a compatible simulator or connected device.
+3. Build & Run.
+
+If you want a fast sanity check before opening the UI:
+```bash
+xcodebuild -list -project "Lung Nodule/Lung Nodule.xcodeproj"
+```
+
 ## Features
 - Fleischner 2017 calculator for solid, pure GGO, and part-solid nodules (single or multiple; low/high risk).
 - Lung-RADS v2022 calculator with baseline/follow-up logic, morphology, size, and suspicious feature inputs.
@@ -39,16 +56,7 @@ It currently focuses on **Fleischner Society 2017** incidental pulmonary nodule 
 - No third-party dependencies.
 
 ## Run locally
-```bash
-git clone https://github.com/ThalesMMS/Lung-Nodule-app.git
-cd Lung-Nodule-app
-open "Lung Nodule/Lung Nodule.xcodeproj"
-```
-
-Then in Xcode:
-1. Select the `Lung Nodule` scheme.
-2. Choose a compatible simulator or connected device.
-3. Build & Run.
+Use the quickstart above for the fastest path. The same project can also be validated from the command line with the reproducibility steps below.
 
 ## Reproducibility checklist
 To verify the project structure and re-run the calculator tests from a clean clone, substitute a compatible simulator name and iOS version if your Xcode installation does not include the example destination shown below:
