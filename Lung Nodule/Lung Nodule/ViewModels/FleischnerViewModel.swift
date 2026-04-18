@@ -5,10 +5,10 @@ class FleischnerViewModel: ObservableObject {
     @Published var input = FleischnerInput()
     @Published var result: FleischnerRecommendation?
     @Published var sizeText: String = "" {
-        didSet { updateSizeCategory() }
+        didSet { updateSizeMeasurement() }
     }
     @Published var solidComponentText: String = "" {
-        didSet { updateSolidComponentCategory() }
+        didSet { updateSolidComponentMeasurement() }
     }
     @Published var useAxisMeasurements: Bool = false {
         didSet {
@@ -44,69 +44,62 @@ class FleischnerViewModel: ObservableObject {
         roundedSizeMm = nil
     }
 
-    private func updateSizeCategory() {
-        guard let rounded = roundedMillimeters(from: sizeText) else {
+    private func updateSizeMeasurement() {
+        guard let value = parseMeasurement(sizeText), value > 0 else {
+            input.sizeMm = nil
+            input.sizeCategory = .lessThanSix
             roundedSizeMm = nil
             return
         }
+        input.sizeMm = value
+        guard let rounded = roundToNearestMm(value) else { return }
         roundedSizeMm = rounded
-        if rounded < 6 {
-            input.sizeCategory = .lessThanSix
-        } else if rounded <= 8 {
-            input.sizeCategory = .sixToEight
-        } else {
-            input.sizeCategory = .greaterThanEight
-        }
+        input = input.resolvingMeasurements()
     }
 
-    private func updateSolidComponentCategory() {
-        guard let rounded = roundedMillimeters(from: solidComponentText) else {
+    private func updateSolidComponentMeasurement() {
+        guard let value = parseMeasurement(solidComponentText), value >= 0 else {
+            input.solidComponentMm = 0
             input.solidComponentSize = .none
+            input = input.resolvingMeasurements()
             return
         }
-        if rounded <= 0 {
-            input.solidComponentSize = .none
-        } else if rounded < 6 {
-            input.solidComponentSize = .lessThanSix
-        } else {
-            input.solidComponentSize = .sixOrMore
-        }
+        input.solidComponentMm = value
+        input = input.resolvingMeasurements()
     }
 
-    private func roundedMillimeters(from text: String) -> Int? {
+    private func parseMeasurement(_ text: String) -> Double? {
         let normalized = text.trimmingCharacters(in: .whitespacesAndNewlines)
             .replacingOccurrences(of: ",", with: ".")
         guard let value = Double(normalized) else { return nil }
-        return roundToNearestMm(value)
-    }
-
-    private func parseDouble(_ text: String) -> Double? {
-        let normalized = text.trimmingCharacters(in: .whitespacesAndNewlines)
-            .replacingOccurrences(of: ",", with: ".")
-        return Double(normalized)
+        guard value.isFinite, roundToNearestMm(value) != nil else { return nil }
+        return value
     }
 
     private func updateSizeFromAxes() {
         guard useAxisMeasurements else { return }
-        guard let longAxis = parseDouble(longAxisText),
-              let shortAxis = parseDouble(shortAxisText),
+        guard let longAxis = parseMeasurement(longAxisText),
+              let shortAxis = parseMeasurement(shortAxisText),
               longAxis > 0,
               shortAxis > 0 else {
             axisMeanMm = nil
             roundedSizeMm = nil
+            input.sizeMm = nil
+            input.sizeCategory = .lessThanSix
             return
         }
         let mean = (longAxis + shortAxis) / 2.0
-        axisMeanMm = mean
-        let rounded = roundToNearestMm(mean)
-        roundedSizeMm = rounded
-        if rounded < 6 {
+        guard let rounded = roundToNearestMm(mean) else {
+            axisMeanMm = nil
+            roundedSizeMm = nil
+            input.sizeMm = nil
             input.sizeCategory = .lessThanSix
-        } else if rounded <= 8 {
-            input.sizeCategory = .sixToEight
-        } else {
-            input.sizeCategory = .greaterThanEight
+            return
         }
+        axisMeanMm = mean
+        roundedSizeMm = rounded
+        input.sizeMm = mean
+        input = input.resolvingMeasurements()
     }
 
     private func syncSizeTextFromAxisMean() {
@@ -118,8 +111,9 @@ class FleischnerViewModel: ObservableObject {
         String(format: "%.1f", value)
     }
 
-    private func roundToNearestMm(_ value: Double) -> Int {
-        Int(value.rounded(.toNearestOrAwayFromZero))
+    private func roundToNearestMm(_ value: Double) -> Int? {
+        guard value.isFinite else { return nil }
+        return Int(exactly: value.rounded(.toNearestOrAwayFromZero))
     }
 
     var axisMeanDisplay: String {
@@ -132,7 +126,7 @@ class FleischnerViewModel: ObservableObject {
         if useAxisMeasurements {
             rawValue = axisMeanMm
         } else {
-            rawValue = parseDouble(sizeText)
+            rawValue = parseMeasurement(sizeText)
         }
         guard let raw = rawValue, let rounded = roundedSizeMm else { return nil }
         let fractional = abs(raw - Double(rounded)) > 0.0001

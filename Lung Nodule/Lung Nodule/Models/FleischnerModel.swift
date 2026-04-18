@@ -62,8 +62,56 @@ struct FleischnerInput {
     var noduleType: NoduleType = .solid
     var sizeCategory: FleischnerSize = .lessThanSix
     var solidComponentSize: FleischnerSolidComponentSize = .none
+    var sizeMm: Double? = nil
+    var solidComponentMm: Double? = nil
     var risk: PatientRisk = .low
     var isMultiple: Bool = false
+}
+
+extension FleischnerInput {
+    func resolvingMeasurements() -> FleischnerInput {
+        var resolved = self
+        if let sizeCategory = FleischnerSize(roundedMillimeters: sizeMm) {
+            resolved.sizeCategory = sizeCategory
+        }
+        if let solidComponentSize = FleischnerSolidComponentSize(roundedMillimeters: solidComponentMm) {
+            resolved.solidComponentSize = solidComponentSize
+        }
+        return resolved
+    }
+}
+
+private extension FleischnerSize {
+    init?(roundedMillimeters sizeMm: Double?) {
+        guard let sizeMm, sizeMm > 0 else { return nil }
+        guard let rounded = roundedMillimeterInt(from: sizeMm) else { return nil }
+        if rounded < 6 {
+            self = .lessThanSix
+        } else if rounded <= 8 {
+            self = .sixToEight
+        } else {
+            self = .greaterThanEight
+        }
+    }
+}
+
+private extension FleischnerSolidComponentSize {
+    init?(roundedMillimeters sizeMm: Double?) {
+        guard let sizeMm else { return nil }
+        guard let rounded = roundedMillimeterInt(from: sizeMm) else { return nil }
+        if rounded <= 0 {
+            self = .none
+        } else if rounded < 6 {
+            self = .lessThanSix
+        } else {
+            self = .sixOrMore
+        }
+    }
+}
+
+private func roundedMillimeterInt(from sizeMm: Double) -> Int? {
+    guard sizeMm.isFinite else { return nil }
+    return Int(exactly: sizeMm.rounded(.toNearestOrAwayFromZero))
 }
 
 struct FleischnerRecommendation {
@@ -81,10 +129,11 @@ struct FleischnerRecommendation {
 
 struct FleischnerCalculator {
     static func calculate(input: FleischnerInput) -> FleischnerRecommendation {
-        if input.isMultiple {
-            return calculateMultiple(input: input)
+        let resolvedInput = input.resolvingMeasurements()
+        if resolvedInput.isMultiple {
+            return calculateMultiple(input: resolvedInput)
         } else {
-            return calculateSingle(input: input)
+            return calculateSingle(input: resolvedInput)
         }
     }
     
