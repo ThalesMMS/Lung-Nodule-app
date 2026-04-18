@@ -6,8 +6,8 @@ It currently focuses on **Fleischner Society 2017** incidental pulmonary nodule 
 
 ## 30-second quickstart
 ```bash
-git clone https://github.com/ThalesMMS/Lung-Nodule.git
-cd Lung-Nodule
+git clone https://github.com/ThalesMMS/Lung-Nodule-app.git
+cd Lung-Nodule-app
 open "Lung Nodule/Lung Nodule.xcodeproj"
 ```
 
