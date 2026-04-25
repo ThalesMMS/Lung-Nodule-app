@@ -10,6 +10,7 @@ struct FleischnerView: View {
     @State private var highRiskSmokingHistory = false
     @State private var highRiskExposure = false
     @State private var highRiskFamilyHistory = false
+    @State private var selectedReference: ReferenceType?
     @FocusState private var focusedField: FocusField?
 
     private enum FocusField {
@@ -80,7 +81,7 @@ struct FleischnerView: View {
             )
             
             // Reference link
-            Button(action: {}) {
+            Button(action: { selectedReference = .fleischnerGuideline }) {
                 Text("Reference")
                     .foregroundColor(Color(red: 0.2, green: 0.8, blue: 0.2))
             }
@@ -135,6 +136,7 @@ struct FleischnerView: View {
         } message: {
             Text("For part-solid nodules, measure the solid component on lung windows. The solid component size determines management recommendations.")
         }
+        .referencePresenter(reference: $selectedReference)
     }
 
     private func updateHighRiskFromChecklist() {

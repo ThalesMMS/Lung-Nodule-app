@@ -1,9 +1,26 @@
 import Testing
 @testable import Lung_Nodule
+import Combine
 import Foundation
 
 @MainActor
 struct GrowthCalculatorTests {
+    private final class TestCalculationScheduler {
+        private var scheduledActions: [@MainActor () -> Void] = []
+
+        func schedule(_ action: @escaping @MainActor () -> Void) {
+            scheduledActions.append(action)
+        }
+
+        @MainActor
+        func runScheduledActions() {
+            while !scheduledActions.isEmpty {
+                let action = scheduledActions.removeFirst()
+                action()
+            }
+        }
+    }
+
     @Test func growthCalculatorSetsGrowingWithinTwelveMonths() async throws {
         let viewModel = LungRADSViewModel()
         viewModel.input.ctStatus = .followUp
@@ -26,6 +43,31 @@ struct GrowthCalculatorTests {
         viewModel.currentDate = Date(timeIntervalSince1970: 60 * 60 * 24 * 180)
         viewModel.calculate()
         #expect(viewModel.input.noduleStatus == .stable)
+    }
+
+    @Test func growthStatusSyncCalculatesOnceForSizeEdit() async throws {
+        let scheduler = TestCalculationScheduler()
+        let viewModel = LungRADSViewModel(calculationScheduler: scheduler.schedule)
+        viewModel.input.noduleType = .solid
+        viewModel.input.ctStatus = .followUp
+        viewModel.useGrowthCalculator = true
+        viewModel.priorSizeText = "5.4"
+        viewModel.priorDate = Date(timeIntervalSince1970: 0)
+        viewModel.currentDate = Date(timeIntervalSince1970: 60 * 60 * 24 * 200)
+        scheduler.runScheduledActions()
+
+        var resultEmissionCount = 0
+        let cancellable = viewModel.$result.dropFirst().sink { _ in
+            resultEmissionCount += 1
+        }
+
+        viewModel.sizeText = "7.2"
+        scheduler.runScheduledActions()
+
+        #expect(viewModel.input.noduleStatus == .growing)
+        #expect(viewModel.result?.category == .cat4A)
+        #expect(resultEmissionCount == 1)
+        cancellable.cancel()
     }
 
     // MARK: - Growth Threshold Boundary Tests

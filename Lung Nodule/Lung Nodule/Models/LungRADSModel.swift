@@ -264,6 +264,62 @@ struct LungRADSResult {
     }
 }
 
+struct LungRADSGrowthStatusResult {
+    let noduleStatus: NoduleStatus?
+    let summary: String?
+}
+
+struct LungRADSGrowthStatusCalculator {
+    static func calculate(
+        input: LungRADSInput,
+        isEnabled: Bool,
+        priorSizeMm: Double?,
+        priorDate: Date,
+        currentDate: Date,
+        calendar: Calendar = .current
+    ) -> LungRADSGrowthStatusResult {
+        guard isEnabled, input.ctStatus == .followUp else {
+            return LungRADSGrowthStatusResult(noduleStatus: nil, summary: nil)
+        }
+        guard let currentSize = input.sizeMm, currentSize > 0,
+              let priorSize = priorSizeMm, priorSize > 0 else {
+            return LungRADSGrowthStatusResult(
+                noduleStatus: nil,
+                summary: "Enter prior and current sizes to calculate growth."
+            )
+        }
+        guard currentDate > priorDate else {
+            return LungRADSGrowthStatusResult(
+                noduleStatus: nil,
+                summary: "Enter a valid date interval."
+            )
+        }
+
+        let dayCount = calendar.dateComponents([.day], from: priorDate, to: currentDate).day ?? 0
+        let days = max(0, dayCount)
+        let months = Double(days) / 30.44
+        let delta = currentSize - priorSize
+        let withinTwelveMonths = days <= 365
+        let isGrowing = withinTwelveMonths && delta > 1.5
+        let noduleStatus: NoduleStatus? = withinTwelveMonths ? (isGrowing ? .growing : .stable) : nil
+        let deltaText = String(format: "%+.1f", delta)
+        let monthsText = String(format: "%.1f", months)
+
+        if withinTwelveMonths {
+            let statusText = isGrowing ? "Growing" : "Stable"
+            return LungRADSGrowthStatusResult(
+                noduleStatus: noduleStatus,
+                summary: "Delta \(deltaText) mm in \(monthsText) months -> \(statusText)"
+            )
+        }
+
+        return LungRADSGrowthStatusResult(
+            noduleStatus: nil,
+            summary: "Delta \(deltaText) mm in \(monthsText) months -> Interval > 12 months. Review manually."
+        )
+    }
+}
+
 struct LungRADSCalculator {
     
     // MARK: - Main Calculator Entry Point

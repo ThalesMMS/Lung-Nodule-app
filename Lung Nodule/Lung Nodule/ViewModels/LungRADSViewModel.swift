@@ -1,14 +1,18 @@
 import SwiftUI
 import Combine
 
+@MainActor
 class LungRADSViewModel: ObservableObject {
-    @Published var input = LungRADSInput()
+    typealias CalculationScheduler = (@escaping @MainActor () -> Void) -> Void
+
+    @Published var input = LungRADSInput() {
+        didSet { scheduleCalculation() }
+    }
     @Published var result: LungRADSResult?
     @Published var sizeText: String = "" {
         didSet {
             guard !useVolumeMeasurements else { return }
             input.sizeMm = parseDouble(sizeText)
-            updateGrowthStatus()
         }
     }
     @Published var solidComponentText: String = "" {
@@ -51,16 +55,16 @@ class LungRADSViewModel: ObservableObject {
         didSet { updateSizeFromVolume() }
     }
     @Published var useGrowthCalculator: Bool = false {
-        didSet { updateGrowthStatus() }
+        didSet { scheduleCalculation() }
     }
     @Published var priorSizeText: String = "" {
-        didSet { updateGrowthStatus() }
+        didSet { scheduleCalculation() }
     }
     @Published var priorDate: Date = Calendar.current.date(byAdding: .year, value: -1, to: Date()) ?? Date() {
-        didSet { updateGrowthStatus() }
+        didSet { scheduleCalculation() }
     }
     @Published var currentDate: Date = Date() {
-        didSet { updateGrowthStatus() }
+        didSet { scheduleCalculation() }
     }
     @Published var ageText: String = ""
     @Published var isCurrentSmoker: Bool = true {
@@ -74,6 +78,14 @@ class LungRADSViewModel: ObservableObject {
     @Published private(set) var axisMeanMm: Double? = nil
     @Published private(set) var volumeEquivalentMm: Double? = nil
     @Published private(set) var growthSummary: String? = nil
+
+    private var isCalculationScheduled = false
+    private var isCalculating = false
+    private let calculationScheduler: CalculationScheduler
+
+    init(calculationScheduler: CalculationScheduler? = nil) {
+        self.calculationScheduler = calculationScheduler ?? Self.defaultCalculationScheduler
+    }
 
     var axisMeanDisplay: String {
         guard let mean = axisMeanMm else { return "--" }
@@ -106,12 +118,54 @@ class LungRADSViewModel: ObservableObject {
     }
     
     func calculate() {
-        updateGrowthStatus()
+        isCalculationScheduled = false
+        performScheduledCalculation()
+    }
+
+    private func scheduleCalculation() {
+        guard !isCalculationScheduled, !isCalculating else { return }
+        isCalculationScheduled = true
+
+        calculationScheduler { [weak self] in
+            self?.performCalculationIfScheduled()
+        }
+    }
+
+    private func performCalculationIfScheduled() {
+        guard isCalculationScheduled else { return }
+        performScheduledCalculation()
+    }
+
+    private func performScheduledCalculation() {
+        isCalculating = true
+        defer {
+            isCalculating = false
+            isCalculationScheduled = false
+        }
+
+        let growthStatus = LungRADSGrowthStatusCalculator.calculate(
+            input: input,
+            isEnabled: useGrowthCalculator,
+            priorSizeMm: parseDouble(priorSizeText),
+            priorDate: priorDate,
+            currentDate: currentDate
+        )
+        growthSummary = growthStatus.summary
+        if let noduleStatus = growthStatus.noduleStatus, input.noduleStatus != noduleStatus {
+            input.noduleStatus = noduleStatus
+        }
+
         guard hasRequiredInputsForCalculation else {
             result = nil
             return
         }
         result = LungRADSCalculator.calculate(input: input)
+    }
+
+    private static let defaultCalculationScheduler: CalculationScheduler = { action in
+        Task { @MainActor in
+            action()
+        }
     }
     
     func reset() {
@@ -159,7 +213,6 @@ class LungRADSViewModel: ObservableObject {
         let normalized = normalizeMeasurement(mean)
         axisMeanMm = normalized
         input.sizeMm = normalized
-        updateGrowthStatus()
     }
 
     private func updateSizeFromVolume() {
@@ -169,7 +222,6 @@ class LungRADSViewModel: ObservableObject {
             input.volumeMm3 = nil
             input.sizeMm = nil
             volumeEquivalentMm = nil
-            updateGrowthStatus()
             return
         }
         let diameter = LungRADSVolumeConverter.equivalentDiameter(volumeValue)
@@ -178,7 +230,6 @@ class LungRADSViewModel: ObservableObject {
         input.useVolume = true
         volumeEquivalentMm = normalized
         input.sizeMm = normalized
-        updateGrowthStatus()
     }
 
     private func syncSizeTextFromAxisMean() {
@@ -209,42 +260,6 @@ class LungRADSViewModel: ObservableObject {
     private func parseInt(_ text: String) -> Int? {
         let normalized = text.trimmingCharacters(in: .whitespacesAndNewlines)
         return Int(normalized)
-    }
-
-    private func updateGrowthStatus() {
-        guard useGrowthCalculator, input.ctStatus == .followUp else {
-            growthSummary = nil
-            return
-        }
-        guard let currentSize = input.sizeMm, currentSize > 0,
-              let priorSize = parseDouble(priorSizeText), priorSize > 0 else {
-            growthSummary = "Enter prior and current sizes to calculate growth."
-            return
-        }
-        guard currentDate > priorDate else {
-            growthSummary = "Enter a valid date interval."
-            return
-        }
-        let dayCount = Calendar.current.dateComponents([.day], from: priorDate, to: currentDate).day ?? 0
-        let days = max(0, dayCount)
-        let months = Double(days) / 30.44
-        let delta = currentSize - priorSize
-        let withinTwelveMonths = days <= 365
-        let isGrowing = withinTwelveMonths && delta > 1.5
-        if withinTwelveMonths {
-            let newStatus: NoduleStatus = isGrowing ? .growing : .stable
-            if input.noduleStatus != newStatus {
-                input.noduleStatus = newStatus
-            }
-        }
-        let deltaText = String(format: "%+.1f", delta)
-        let monthsText = String(format: "%.1f", months)
-        if withinTwelveMonths {
-            let statusText = isGrowing ? "Growing" : "Stable"
-            growthSummary = "Delta \(deltaText) mm in \(monthsText) months -> \(statusText)"
-        } else {
-            growthSummary = "Delta \(deltaText) mm in \(monthsText) months -> Interval > 12 months. Review manually."
-        }
     }
 
     private var hasRequiredInputsForCalculation: Bool {

@@ -6,6 +6,12 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		A1B2C3D42F10000100000001 /* Fleischner 2017.pdf in Resources */ = {isa = PBXBuildFile; fileRef = A1B2C3D42F10000100000004 /* Fleischner 2017.pdf */; };
+		A1B2C3D42F10000100000002 /* ACR-Lung-RADS.pdf in Resources */ = {isa = PBXBuildFile; fileRef = A1B2C3D42F10000100000005 /* ACR-Lung-RADS.pdf */; };
+		A1B2C3D42F10000100000003 /* Lung-RADS-2022 Table.pdf in Resources */ = {isa = PBXBuildFile; fileRef = A1B2C3D42F10000100000006 /* Lung-RADS-2022 Table.pdf */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		126E915C2F00112D00CCCD63 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -27,6 +33,9 @@
 		126E914E2F00112C00CCCD63 /* Lung Nodule.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Lung Nodule.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		126E915B2F00112D00CCCD63 /* Lung NoduleTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Lung NoduleTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		126E91652F00112D00CCCD63 /* Lung NoduleUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Lung NoduleUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		A1B2C3D42F10000100000004 /* Fleischner 2017.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "Fleischner 2017.pdf"; sourceTree = "<group>"; };
+		A1B2C3D42F10000100000005 /* ACR-Lung-RADS.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "ACR-Lung-RADS.pdf"; sourceTree = "<group>"; };
+		A1B2C3D42F10000100000006 /* Lung-RADS-2022 Table.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "Lung-RADS-2022 Table.pdf"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -78,6 +87,7 @@
 				126E91502F00112C00CCCD63 /* Lung Nodule */,
 				126E915E2F00112D00CCCD63 /* Lung NoduleTests */,
 				126E91682F00112D00CCCD63 /* Lung NoduleUITests */,
+				A1B2C3D42F10000100000007 /* References-PDFs */,
 				126E914F2F00112C00CCCD63 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -90,6 +100,16 @@
 				126E91652F00112D00CCCD63 /* Lung NoduleUITests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		A1B2C3D42F10000100000007 /* References-PDFs */ = {
+			isa = PBXGroup;
+			children = (
+				A1B2C3D42F10000100000005 /* ACR-Lung-RADS.pdf */,
+				A1B2C3D42F10000100000004 /* Fleischner 2017.pdf */,
+				A1B2C3D42F10000100000006 /* Lung-RADS-2022 Table.pdf */,
+			);
+			path = "../References-PDFs";
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -212,6 +232,9 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A1B2C3D42F10000100000001 /* Fleischner 2017.pdf in Resources */,
+				A1B2C3D42F10000100000002 /* ACR-Lung-RADS.pdf in Resources */,
+				A1B2C3D42F10000100000003 /* Lung-RADS-2022 Table.pdf in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

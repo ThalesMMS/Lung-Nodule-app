@@ -26,6 +26,8 @@ struct ContentView: View {
     @State private var selectedCalculator: CalculatorType = .fleischner
     @State private var startMode: AppMode = .calculator // Default to calculator as per user request for tool
     @State private var brockForm = BrockFormState()
+    @State private var brockHandoffError: String?
+    @State private var selectedReference: ReferenceType?
     
     // Custom Color for Segmented Control Logic
     init() {
@@ -257,9 +259,9 @@ struct ContentView: View {
                                         .padding(.bottom, 8)
                                     
                                     VStack(spacing: 0) {
-                                        ReferenceLink(text: "Fleischner Society Guidelines Reference")
+                                        ReferenceLink(text: "Fleischner Society Guidelines Reference", reference: .fleischnerGuideline, onTap: presentReference)
                                         Divider().background(Color(white: 0.3))
-                                        ReferenceLink(text: "Recommendations for Measuring Pulmonary Nodules at CT: A Statement from the Fleischner Society")
+                                        ReferenceLink(text: "Recommendations for Measuring Pulmonary Nodules at CT: A Statement from the Fleischner Society", reference: .fleischnerGuideline, onTap: presentReference)
                                     }
                                     .background(Color(white: 0.15))
                                     .cornerRadius(12)
@@ -276,15 +278,15 @@ struct ContentView: View {
                                         .padding(.bottom, 8)
                                     
                                     VStack(spacing: 0) {
-                                        ReferenceLink(text: "ACR Lung-RADS v2022 Reference")
+                                        ReferenceLink(text: "ACR Lung-RADS v2022 Reference", reference: .lungRADSGuideline, onTap: presentReference)
                                         Divider().background(Color(white: 0.3))
-                                        ReferenceLink(text: "ACR Lung-RADS v2022 Summary of Changes and Updates")
+                                        ReferenceLink(text: "ACR Lung-RADS v2022 Summary of Changes and Updates", reference: .lungRADSGuideline, onTap: presentReference)
                                         Divider().background(Color(white: 0.3))
-                                        ReferenceLink(text: "ACR Lung-RADS v2022: Assessment Categories and Management Recommendations")
+                                        ReferenceLink(text: "ACR Lung-RADS v2022: Assessment Categories and Management Recommendations", reference: .lungRADSTable, onTap: presentReference)
                                         Divider().background(Color(white: 0.3))
-                                        ReferenceLink(text: "ACR Lung Cancer Screening CT Incidental Findings Quick Reference Guide")
+                                        ReferenceLink(text: "ACR Lung Cancer Screening CT Incidental Findings Quick Reference Guide", reference: .lungRADSGuideline, onTap: presentReference)
                                         Divider().background(Color(white: 0.3))
-                                        ReferenceLink(text: "ACR–STR Practice Parameter for the Performance and Reporting of Lung Cancer Screening Thoracic Computed Tomography (CT)")
+                                        ReferenceLink(text: "ACR–STR Practice Parameter for the Performance and Reporting of Lung Cancer Screening Thoracic Computed Tomography (CT)", reference: .lungRADSGuideline, onTap: presentReference)
                                     }
                                     .background(Color(white: 0.15))
                                     .cornerRadius(12)
@@ -296,7 +298,7 @@ struct ContentView: View {
                             .padding(.bottom, 40)
                         } else if startMode == .risk {
                             // Brock Full Model Calculator
-                            BrockModelView(form: $brockForm)
+                            BrockView(form: $brockForm)
                                 .padding(.top)
                         } else {
                             Text("Other Mode")
@@ -310,32 +312,50 @@ struct ContentView: View {
             .toolbar(.hidden, for: .navigationBar)
         }
         .preferredColorScheme(.dark) // Force dark mode
+        .alert("Brock handoff unavailable", isPresented: brockHandoffAlertPresented) {
+            Button("OK", role: .cancel) { brockHandoffError = nil }
+        } message: {
+            Text(brockHandoffError ?? "")
+        }
+        .referencePresenter(reference: $selectedReference)
+    }
+
+    private func presentReference(_ reference: ReferenceType) {
+        selectedReference = reference
     }
 
     private func openBrockPrefilled(from input: LungRADSInput) {
-        if let size = input.sizeMm, size > 0 {
-            brockForm.noduleSize = formatSize(size)
+        guard let noduleType = BrockNoduleType.from(lungRADSType: input.noduleType) else {
+            brockHandoffError = "Brock malignancy risk is unavailable for \(input.noduleType.rawValue) nodules."
+            return
         }
-        brockForm.noduleMorphology = brockMorphologyIndex(from: input.noduleType)
-        if !input.isMultiple {
-            brockForm.noduleCount = "1"
-        }
-        startMode = .risk
-    }
 
-    private func brockMorphologyIndex(from type: LungRADSNoduleType) -> Int {
-        switch type {
-        case .groundGlass:
-            return 0
-        case .partSolid:
-            return 1
-        default:
-            return 2
+        let defaultMorphologyIndex = BrockNoduleType.allCases.firstIndex(of: .solid) ?? 0
+        var nextForm = BrockFormState()
+
+        if let size = input.sizeMm, size > 0 {
+            nextForm.noduleSize = formatSize(size)
         }
+        nextForm.noduleCount = input.isMultiple ? "2" : "1"
+        nextForm.noduleMorphology = BrockNoduleType.allCases.firstIndex(of: noduleType) ?? defaultMorphologyIndex
+
+        brockForm = nextForm
+        startMode = .risk
     }
 
     private func formatSize(_ value: Double) -> String {
         String(format: "%.1f", value)
+    }
+
+    private var brockHandoffAlertPresented: Binding<Bool> {
+        Binding(
+            get: { brockHandoffError != nil },
+            set: { isPresented in
+                if !isPresented {
+                    brockHandoffError = nil
+                }
+            }
+        )
     }
 }
 
@@ -363,358 +383,15 @@ struct InfoRow: View {
 
 struct ReferenceLink: View {
     let text: String
+    let reference: ReferenceType
+    let onTap: (ReferenceType) -> Void
     
     var body: some View {
-        Button(action: {}) {
+        Button(action: { onTap(reference) }) {
             Text(text)
                 .foregroundColor(Color(red: 0.0, green: 0.478, blue: 1.0))
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding()
         }
-    }
-}
-
-struct BrockFormState {
-    var age: String = ""
-    var gender: Int = 0
-    var noduleSize: String = ""
-    var noduleMorphology: Int = 0
-    var upperLobe: Bool = false
-    var noduleCount: String = ""
-    var spiculation: Bool = false
-    var familyHistory: Bool = false
-    var emphysema: Bool = false
-}
-
-// Brock Full Model View matching reference Brock Full Model 1.PNG / 2.PNG
-struct BrockModelView: View {
-    @Binding var form: BrockFormState
-    @FocusState private var focusedField: FocusField?
-    private let blueAccent = Color(red: 0.0, green: 0.478, blue: 1.0)
-
-    private enum FocusField {
-        case age
-        case size
-        case count
-    }
-    
-    var body: some View {
-        VStack(spacing: 16) {
-            // Description card
-            Text("The Brock full model estimates a CT-detected nodule's 2–4 year malignancy risk.")
-                .font(.subheadline)
-                .foregroundColor(.white)
-                .multilineTextAlignment(.center)
-                .padding()
-                .frame(maxWidth: .infinity)
-                .background(Color(white: 0.15))
-                .cornerRadius(12)
-                .padding(.horizontal, 16)
-            
-            // PATIENT Section
-            VStack(alignment: .leading, spacing: 0) {
-                Text("PATIENT")
-                    .font(.caption)
-                    .fontWeight(.semibold)
-                    .foregroundColor(.gray)
-                    .padding(.horizontal)
-                    .padding(.bottom, 8)
-                
-                VStack(spacing: 0) {
-                    // Age
-                    HStack {
-                        Text("Age (≥ 18 yrs)")
-                            .foregroundColor(.white)
-                        Spacer()
-                        TextField("", text: $form.age)
-                            .keyboardType(.numberPad)
-                            .multilineTextAlignment(.trailing)
-                            .foregroundColor(.gray)
-                            .frame(width: 60)
-                            .focused($focusedField, equals: .age)
-                        Text("yrs")
-                            .foregroundColor(.gray)
-                    }
-                    .padding()
-                    
-                    Divider().background(Color(white: 0.3))
-                    
-                    // Gender
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Gender")
-                            .foregroundColor(.gray)
-                            .font(.caption)
-                        
-                        Picker("Gender", selection: $form.gender) {
-                            Text("Male").tag(0)
-                            Text("Female").tag(1)
-                        }
-                        .pickerStyle(.segmented)
-                    }
-                    .padding()
-                }
-                .background(Color(white: 0.15))
-                .cornerRadius(12)
-                .padding(.horizontal)
-            }
-            
-            // NODULE Section
-            VStack(alignment: .leading, spacing: 0) {
-                Text("NODULE")
-                    .font(.caption)
-                    .fontWeight(.semibold)
-                    .foregroundColor(.gray)
-                    .padding(.horizontal)
-                    .padding(.bottom, 8)
-                
-                VStack(spacing: 0) {
-                    // Size
-                    HStack {
-                        Text("Size (3–30 mm)")
-                            .foregroundColor(.white)
-                        Spacer()
-                        TextField("", text: $form.noduleSize)
-                            .keyboardType(.decimalPad)
-                            .multilineTextAlignment(.trailing)
-                            .foregroundColor(.gray)
-                            .frame(width: 60)
-                            .focused($focusedField, equals: .size)
-                        Text("mm")
-                            .foregroundColor(.gray)
-                    }
-                    .padding()
-                    
-                    Divider().background(Color(white: 0.3))
-                    
-                    // Nodule morphology
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Nodule morphology")
-                            .foregroundColor(.gray)
-                            .font(.caption)
-                        
-                        Picker("Morphology", selection: $form.noduleMorphology) {
-                            Text("Non-solid (GG)").tag(0)
-                            Text("Part-solid").tag(1)
-                            Text("Solid").tag(2)
-                        }
-                        .pickerStyle(.segmented)
-                    }
-                    .padding()
-                    
-                    Divider().background(Color(white: 0.3))
-                    
-                    // Upper lobe
-                    HStack {
-                        Text("Upper lobe")
-                            .foregroundColor(.white)
-                        Spacer()
-                        Toggle("", isOn: $form.upperLobe)
-                            .labelsHidden()
-                    }
-                    .padding()
-                    
-                    Divider().background(Color(white: 0.3))
-                    
-                    // Nodule count
-                    HStack {
-                        Text("Nodule count (≥ 1), no decimal")
-                            .foregroundColor(.white)
-                        Spacer()
-                        TextField("#", text: $form.noduleCount)
-                            .keyboardType(.numberPad)
-                            .multilineTextAlignment(.trailing)
-                            .foregroundColor(.gray)
-                            .frame(width: 40)
-                            .focused($focusedField, equals: .count)
-                    }
-                    .padding()
-                    
-                    Divider().background(Color(white: 0.3))
-                    
-                    // Spiculation
-                    HStack {
-                        Text("Spiculation")
-                            .foregroundColor(.white)
-                        Spacer()
-                        Toggle("", isOn: $form.spiculation)
-                            .labelsHidden()
-                    }
-                    .padding()
-                }
-                .background(Color(white: 0.15))
-                .cornerRadius(12)
-                .padding(.horizontal)
-            }
-            
-            // OTHER RISK FACTORS Section
-            VStack(alignment: .leading, spacing: 0) {
-                Text("OTHER RISK FACTORS")
-                    .font(.caption)
-                    .fontWeight(.semibold)
-                    .foregroundColor(.gray)
-                    .padding(.horizontal)
-                    .padding(.bottom, 8)
-                
-                VStack(spacing: 0) {
-                    HStack {
-                        Text("Family history of lung cancer")
-                            .foregroundColor(.white)
-                        Spacer()
-                        Toggle("", isOn: $form.familyHistory)
-                            .labelsHidden()
-                    }
-                    .padding()
-                    
-                    Divider().background(Color(white: 0.3))
-                    
-                    HStack {
-                        Text("Emphysema")
-                            .foregroundColor(.white)
-                        Spacer()
-                        Toggle("", isOn: $form.emphysema)
-                            .labelsHidden()
-                    }
-                    .padding()
-                }
-                .background(Color(white: 0.15))
-                .cornerRadius(12)
-                .padding(.horizontal)
-            }
-            
-            // RESULT Section
-            VStack(alignment: .leading, spacing: 0) {
-                Text("RESULT")
-                    .font(.caption)
-                    .fontWeight(.semibold)
-                    .foregroundColor(.gray)
-                    .padding(.horizontal)
-                    .padding(.bottom, 8)
-                
-                VStack(spacing: 0) {
-                    if let probability = brockProbability {
-                        Text(String(format: "Estimated malignancy risk: %.1f%%", probability))
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding()
-                    } else {
-                        Text("Enter all required fields.")
-                            .foregroundColor(.gray)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding()
-                    }
-                }
-                .background(Color(white: 0.15))
-                .cornerRadius(12)
-                .padding(.horizontal)
-            }
-            
-            // Reference link
-            Button(action: {}) {
-                Text("Reference")
-                    .foregroundColor(Color(red: 0.0, green: 0.478, blue: 1.0))
-            }
-            .padding(.top, 8)
-            
-            Spacer()
-        }
-        .toolbar {
-            ToolbarItemGroup(placement: .keyboard) {
-                Spacer()
-                Button("Done") { focusedField = nil }
-                    .foregroundColor(blueAccent)
-            }
-        }
-    }
-
-    private var brockProbability: Double? {
-        guard let ageValue = parseInt(form.age), ageValue >= 18 else { return nil }
-        guard let sizeValue = parseDouble(form.noduleSize), sizeValue >= 3, sizeValue <= 30 else { return nil }
-        guard let countValue = parseInt(form.noduleCount), countValue >= 1 else { return nil }
-        
-        let type: BrockNoduleType
-        switch form.noduleMorphology {
-        case 0: type = .nonsolid
-        case 1: type = .partSolid
-        default: type = .solid
-        }
-        
-        let input = BrockInput(
-            age: ageValue,
-            isFemale: form.gender == 1,
-            noduleSizeMm: sizeValue,
-            noduleType: type,
-            upperLobe: form.upperLobe,
-            noduleCount: countValue,
-            spiculation: form.spiculation,
-            familyHistory: form.familyHistory,
-            emphysema: form.emphysema
-        )
-
-        return BrockCalculator.calculateProbability(input: input)
-    }
-
-    private func parseDouble(_ text: String) -> Double? {
-        let normalized = text.trimmingCharacters(in: .whitespacesAndNewlines)
-            .replacingOccurrences(of: ",", with: ".")
-        return Double(normalized)
-    }
-
-    private func parseInt(_ text: String) -> Int? {
-        let normalized = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        return Int(normalized)
-    }
-}
-
-enum BrockNoduleType {
-    case nonsolid
-    case partSolid
-    case solid
-}
-
-struct BrockInput {
-    let age: Int
-    let isFemale: Bool
-    let noduleSizeMm: Double
-    let noduleType: BrockNoduleType
-    let upperLobe: Bool
-    let noduleCount: Int
-    let spiculation: Bool
-    let familyHistory: Bool
-    let emphysema: Bool
-}
-
-struct BrockCalculator {
-    static func calculateProbability(input: BrockInput) -> Double {
-        let ageTerm = 0.0287 * (Double(input.age) - 62.0)
-        let sexTerm = input.isFemale ? 0.6011 : 0.0
-        let familyHistoryTerm = input.familyHistory ? 0.2961 : 0.0
-        let emphysemaTerm = input.emphysema ? 0.2953 : 0.0
-        let spiculationTerm = input.spiculation ? 0.7729 : 0.0
-        let upperLobeTerm = input.upperLobe ? 0.6581 : 0.0
-        let noduleTypeTerm: Double
-        switch input.noduleType {
-        case .nonsolid:
-            noduleTypeTerm = -0.1276
-        case .partSolid:
-            noduleTypeTerm = 0.377
-        case .solid:
-            noduleTypeTerm = 0.0
-        }
-
-        let sizeTerm = -5.3854 * (pow(input.noduleSizeMm / 10.0, -0.5) - 1.58113883)
-        let countTerm = -0.0824 * (Double(input.noduleCount) - 4.0)
-        let logOdds = -6.7892
-            + ageTerm
-            + sexTerm
-            + familyHistoryTerm
-            + emphysemaTerm
-            + sizeTerm
-            + noduleTypeTerm
-            + upperLobeTerm
-            + countTerm
-            + spiculationTerm
-
-        let odds = exp(logOdds)
-        return (odds / (1.0 + odds)) * 100.0
     }
 }

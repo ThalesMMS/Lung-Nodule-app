@@ -1,5 +1,10 @@
 import SwiftUI
 
+private extension Color {
+    static var fleischnerAccent: Color { Color(red: 0.2, green: 0.8, blue: 0.2) }
+    static var lungRADSAccent: Color { Color(red: 0.0, green: 0.478, blue: 1.0) }
+}
+
 // MARK: - Fleischner Common Issues Detail Views
 
 struct FleischnerEligibilityDetailView: View {
@@ -41,7 +46,7 @@ struct FleischnerEligibilityDetailView: View {
                     }
                 }
                 
-                ReferenceButton()
+                ReferenceButton(reference: .fleischnerGuideline, accentColor: .fleischnerAccent)
             }
             .padding(.top, 16)
         }
@@ -95,7 +100,7 @@ struct FleischnerMeasuringNodulesDetailView: View {
                     }
                 }
                 
-                ReferenceButton()
+                ReferenceButton(reference: .fleischnerGuideline, accentColor: .fleischnerAccent)
             }
             .padding(.top, 16)
         }
@@ -142,7 +147,7 @@ struct FleischnerPerifissuralNodulesDetailView: View {
                     }
                 }
                 
-                ReferenceButton()
+                ReferenceButton(reference: .fleischnerGuideline, accentColor: .fleischnerAccent)
             }
             .padding(.top, 16)
         }
@@ -201,7 +206,7 @@ struct FleischnerNoduleDensityDetailView: View {
                     .padding()
                 }
                 
-                ReferenceButton()
+                ReferenceButton(reference: .fleischnerGuideline, accentColor: .fleischnerAccent)
             }
             .padding(.top, 16)
         }
@@ -212,6 +217,9 @@ struct FleischnerNoduleDensityDetailView: View {
 }
 
 struct FleischnerCalcificationPatternsDetailView: View {
+    var reference: ReferenceType = .fleischnerGuideline
+    var accentColor: Color = .fleischnerAccent
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
@@ -257,7 +265,7 @@ struct FleischnerCalcificationPatternsDetailView: View {
                     .padding(.horizontal)
                 }
                 
-                ReferenceButton()
+                ReferenceButton(reference: reference, accentColor: accentColor)
             }
             .padding(.top, 16)
         }
@@ -313,7 +321,7 @@ struct FleischnerApicalScarringDetailView: View {
                     }
                 }
                 
-                ReferenceButton()
+                ReferenceButton(reference: .fleischnerGuideline, accentColor: .fleischnerAccent)
             }
             .padding(.top, 16)
         }
@@ -346,7 +354,7 @@ struct FleischnerNeckAbdomenCTsDetailView: View {
                     }
                 }
                 
-                ReferenceButton()
+                ReferenceButton(reference: .fleischnerGuideline, accentColor: .fleischnerAccent)
             }
             .padding(.top, 16)
         }
@@ -412,7 +420,7 @@ struct LungRADSEligibilityDetailView: View {
                     }
                 }
                 
-                ReferenceButton()
+                ReferenceButton(reference: .lungRADSGuideline)
             }
             .padding(.top, 16)
         }
@@ -445,7 +453,7 @@ struct LungRADSMeasuringNodulesDetailView: View {
                     }
                 }
                 
-                ReferenceButton()
+                ReferenceButton(reference: .lungRADSGuideline)
             }
             .padding(.top, 16)
         }
@@ -503,7 +511,7 @@ struct LungRADSJuxtapleuralNodulesDetailView: View {
                     }
                 }
                 
-                ReferenceButton()
+                ReferenceButton(reference: .lungRADSGuideline)
             }
             .padding(.top, 16)
         }
@@ -536,7 +544,7 @@ struct LungRADSNoduleDensityDetailView: View {
                     }
                 }
                 
-                ReferenceButton()
+                ReferenceButton(reference: .lungRADSGuideline)
             }
             .padding(.top, 16)
         }
@@ -548,7 +556,10 @@ struct LungRADSNoduleDensityDetailView: View {
 
 struct LungRADSCalcificationPatternsDetailView: View {
     var body: some View {
-        FleischnerCalcificationPatternsDetailView()
+        FleischnerCalcificationPatternsDetailView(
+            reference: .lungRADSGuideline,
+            accentColor: .lungRADSAccent
+        )
     }
 }
 
@@ -585,7 +596,7 @@ struct LungRADSSteppedManagementDetailView: View {
                     }
                 }
                 
-                ReferenceButton()
+                ReferenceButton(reference: .lungRADSGuideline)
             }
             .padding(.top, 16)
         }
@@ -613,7 +624,7 @@ struct LungRADSIntervalDiagnosticCTDetailView: View {
                     }
                 }
                 
-                ReferenceButton()
+                ReferenceButton(reference: .lungRADSGuideline)
             }
             .padding(.top, 16)
         }
@@ -646,7 +657,7 @@ struct LungRADSInflammatoryFindingsDetailView: View {
                     }
                 }
                 
-                ReferenceButton()
+                ReferenceButton(reference: .lungRADSGuideline)
             }
             .padding(.top, 16)
         }
@@ -669,7 +680,7 @@ struct LungRADSSModifierDetailView: View {
                     }
                 }
                 
-                ReferenceButton()
+                ReferenceButton(reference: .lungRADSGuideline)
             }
             .padding(.top, 16)
         }
@@ -719,14 +730,21 @@ struct DetailItem: View {
 }
 
 struct ReferenceButton: View {
+    let reference: ReferenceType
+    var accentColor: Color = .lungRADSAccent
+    var topPadding: CGFloat = 16
+    var bottomPadding: CGFloat = 32
+    @State private var selectedReference: ReferenceType?
+
     var body: some View {
-        Button(action: {}) {
+        Button(action: { selectedReference = reference }) {
             Text("Reference")
-                .foregroundColor(Color(red: 0.0, green: 0.478, blue: 1.0))
+                .foregroundColor(accentColor)
         }
         .frame(maxWidth: .infinity)
-        .padding(.top, 16)
-        .padding(.bottom, 32)
+        .padding(.top, topPadding)
+        .padding(.bottom, bottomPadding)
+        .referencePresenter(reference: $selectedReference)
     }
 }
 

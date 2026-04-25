@@ -10,6 +10,7 @@ struct LungRADSView: View {
     @State private var showNoduleStatusInfo = false
     @State private var showSolidComponentInfo = false
     @State private var showSuspiciousFeaturesInfo = false
+    @State private var selectedReference: ReferenceType?
     @FocusState private var focusedField: FocusField?
     
     private let blueAccent = Color(red: 0.0, green: 0.478, blue: 1.0)
@@ -30,7 +31,6 @@ struct LungRADSView: View {
     var body: some View {
         mainContent
             .onAppear { viewModel.calculate() }
-            .modifier(LungRADSChangeObservers(viewModel: viewModel))
             .modifier(LungRADSSheets(
                 viewModel: viewModel,
                 showSModifierConsiderations: $showSModifierConsiderations,
@@ -44,6 +44,7 @@ struct LungRADSView: View {
                 showSolidComponentInfo: $showSolidComponentInfo,
                 showSuspiciousFeaturesInfo: $showSuspiciousFeaturesInfo
             ))
+            .referencePresenter(reference: $selectedReference)
             .toolbar {
                 ToolbarItemGroup(placement: .keyboard) {
                     Spacer()
@@ -67,7 +68,9 @@ struct LungRADSView: View {
     @ViewBuilder
     private var resultCardSection: some View {
         if let result = viewModel.result {
-            let brockAction: (() -> Void)? = (result.category == .cat4B && onBrockRequest != nil)
+            let brockAction: (() -> Void)? = (result.category == .cat4B
+                && onBrockRequest != nil
+                && BrockNoduleType.from(lungRADSType: viewModel.input.noduleType) != nil)
                 ? { onBrockRequest?(viewModel.input) }
                 : nil
             LungRADSResultCard(
@@ -585,7 +588,7 @@ struct LungRADSView: View {
     
     // MARK: - Reference Button
     private var referenceButton: some View {
-        Button(action: {}) {
+        Button(action: { selectedReference = .lungRADSGuideline }) {
             Text("Reference")
                 .foregroundColor(blueAccent)
         }
@@ -831,32 +834,6 @@ struct CTStatusInfoView: View {
                 }
             }
         }
-    }
-}
-
-// MARK: - View Modifiers for Type-Checking
-
-struct LungRADSChangeObservers: ViewModifier {
-    @ObservedObject var viewModel: LungRADSViewModel
-    
-    func body(content: Content) -> some View {
-        content
-            .onChange(of: viewModel.input.noduleType) { _, _ in viewModel.calculate() }
-            .onChange(of: viewModel.input.sizeCategory) { _, _ in viewModel.calculate() }
-            .onChange(of: viewModel.input.solidComponentSize) { _, _ in viewModel.calculate() }
-            .onChange(of: viewModel.input.sizeMm) { _, _ in viewModel.calculate() }
-            .onChange(of: viewModel.input.solidComponentMm) { _, _ in viewModel.calculate() }
-            .onChange(of: viewModel.input.ctStatus) { _, _ in viewModel.calculate() }
-            .onChange(of: viewModel.input.noduleStatus) { _, _ in viewModel.calculate() }
-            .onChange(of: viewModel.input.hasBenignCalcification) { _, _ in viewModel.calculate() }
-            .onChange(of: viewModel.input.hasMacroscopicFat) { _, _ in viewModel.calculate() }
-            .onChange(of: viewModel.input.hasAdditionalSuspiciousFeatures) { _, _ in viewModel.calculate() }
-            .onChange(of: viewModel.input.hasInflammatoryFindings) { _, _ in viewModel.calculate() }
-            .onChange(of: viewModel.input.hasAtelectasis) { _, _ in viewModel.calculate() }
-            .onChange(of: viewModel.input.airwayLocation) { _, _ in viewModel.calculate() }
-            .onChange(of: viewModel.input.hasSModifierFindings) { _, _ in viewModel.calculate() }
-            .onChange(of: viewModel.input.hasBenignJuxtapleuralMorphology) { _, _ in viewModel.calculate() }
-            .onChange(of: viewModel.input.isMultiple) { _, _ in viewModel.calculate() }
     }
 }
 
