@@ -184,6 +184,7 @@ struct LungRADSInput {
     var useVolume: Bool = false
     var volumeMm3: Double? = nil
     var solidComponentMm: Double? = nil
+    var solidComponentGrowthDetected: Bool = false
     var airwayLocation: AirwayLocation = .subsegmental
     var ctStatus: CTStatus = .baseline
     var noduleStatus: NoduleStatus = .baseline
@@ -210,6 +211,10 @@ struct LungRADSInput {
     
     var isStable: Bool {
         return noduleStatus == .stable || noduleStatus == .slowGrowing
+    }
+
+    var isSolidComponentGrowing: Bool {
+        return isGrowing && solidComponentGrowthDetected
     }
 
     var sizeValue: Double {
@@ -368,7 +373,7 @@ struct LungRADSCalculator {
                 management: "Continue annual screening with LDCT in 12 months.",
                 additionalNotes: "Macroscopic fat within nodule indicates hamartoma (benign)."
             )
-        } else if input.noduleStatus == .resolved {
+        } else if input.noduleStatus == .resolved && input.noduleType != .airway {
             // Category 2: Resolved nodule
             result = LungRADSResult(
                 category: .cat2,
@@ -400,7 +405,7 @@ struct LungRADSCalculator {
             }
 
             // Apply 4X upgrade if additional suspicious features present
-            // Per Lung-RADS v2022: Category 3, 4A, or 4B + suspicious features = 4X
+            // Per Lung-RADS v2022: Category 3, 4A, or 4B + additional suspicious features = 4X
             if input.hasAdditionalSuspiciousFeatures && (result.category == .cat3 || result.category == .cat4A || result.category == .cat4B) {
                 result = upgrade4X(from: result)
             }
@@ -558,19 +563,41 @@ struct LungRADSCalculator {
         let totalSize = input.sizeValue
         let solidSize = input.solidComponentValue
 
-        // Growing part-solid nodules are suspicious regardless of baseline size
+        // Growing part-solid nodules are suspicious.
+        // Prioritize SOLID-COMPONENT growth when present (Lung-RADS v2022).
         if input.isGrowing {
-            if solidSize < 4 {
+            let usesSolidGrowthPriority = input.hasSolidComponent && input.isSolidComponentGrowing
+
+            // If solid-component growth is present, classify by solid-component size thresholds.
+            if usesSolidGrowthPriority {
+                if solidSize < 4 {
+                    return LungRADSResult(
+                        category: .cat4A,
+                        management: "3-month LDCT.",
+                        additionalNotes: "Growing part-solid nodule with solid component < 4mm (solid-component growth prioritized). Suspicious."
+                    )
+                }
                 return LungRADSResult(
-                    category: .cat4A,
-                    management: "3-month LDCT.",
-                    additionalNotes: "Growing part-solid nodule with solid component < 4mm. Any growth is suspicious."
+                    category: .cat4B,
+                    management: "Chest CT with or without contrast, PET/CT and/or tissue sampling.",
+                    additionalNotes: "Growing part-solid nodule with solid component ≥ 4mm (solid-component growth prioritized). Very suspicious."
                 )
             }
+
+            if solidSize >= 8 {
+                return LungRADSResult(
+                    category: .cat4B,
+                    management: "Chest CT with or without contrast, PET/CT and/or tissue sampling.",
+                    additionalNotes: "Growing part-solid nodule without solid-component growth detected, but existing solid component ≥ 8mm. Very suspicious."
+                )
+            }
+
+            // Otherwise (growth not attributable to solid component), be conservative but avoid automatic 4B.
+            // Total-size growth with a smaller solid component is still suspicious.
             return LungRADSResult(
-                category: .cat4B,
-                management: "Chest CT with or without contrast, PET/CT and/or tissue sampling.",
-                additionalNotes: "Growing part-solid nodule with solid component ≥ 4mm. Very suspicious."
+                category: .cat4A,
+                management: "3-month LDCT.",
+                additionalNotes: "Growing part-solid nodule without solid-component growth detected. Suspicious."
             )
         }
 
@@ -620,7 +647,10 @@ struct LungRADSCalculator {
         }
 
         // STABLE part-solid nodules - potential downgrade
-        if !input.isBaseline && input.isStable {
+        // Lung-RADS v2022: stable at short-term follow-up may be downgraded.
+        // Important: do not downgrade baseline studies; only apply when this is an actual follow-up CT.
+        if input.ctStatus == .followUp && input.isStable {
+            // Base Category 3 (part-solid ≥6mm with solid <6mm) → Category 2 when stable.
             if totalSize >= 6 && solidSize < 6 {
                 return LungRADSResult(
                     category: .cat2,
@@ -629,7 +659,10 @@ struct LungRADSCalculator {
                     additionalNotes: "Category 3 → 2: Part-solid nodule with solid component < 6mm stable on follow-up.",
                     isReclassified: true
                 )
-            } else if solidSize >= 6 && solidSize < 8 {
+            }
+
+            // Base Category 4A (solid component 6-7.9mm) → Category 3 when stable.
+            if solidSize >= 6 && solidSize < 8 {
                 return LungRADSResult(
                     category: .cat3,
                     baseCategory: .cat4A,
@@ -752,6 +785,7 @@ struct LungRADSCalculator {
             useVolume: input.useVolume,
             volumeMm3: input.volumeMm3,
             solidComponentMm: input.solidComponentMm,
+            solidComponentGrowthDetected: input.solidComponentGrowthDetected,
             airwayLocation: input.airwayLocation,
             ctStatus: input.ctStatus,
             noduleStatus: input.noduleStatus,
@@ -773,11 +807,20 @@ struct LungRADSCalculator {
         // - Subsegmental airway nodule tends to Category 2
         // - Segmental/proximal baseline = Category 4A
         // - Persistent at 3-month follow-up = Category 4B
+        // - Resolved airway finding returns to Category 1
         if input.hasAtelectasis {
             return LungRADSResult(
                 category: .cat2,
                 management: "Continue annual screening with LDCT in 12 months.",
                 additionalNotes: "Atelectasis attributed to mucus plugging without an underlying mass. Endobronchial finding without other suspicious features."
+            )
+        }
+
+        if !input.isBaseline, input.noduleStatus == .resolved {
+            return LungRADSResult(
+                category: .cat1,
+                management: "Continue annual screening with LDCT in 12 months.",
+                additionalNotes: "Resolved endobronchial/airway finding at follow-up."
             )
         }
         

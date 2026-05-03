@@ -495,6 +495,17 @@ struct LungRADSView: View {
                     .disabled(viewModel.useGrowthCalculator)
                 }
             )
+
+            if viewModel.input.noduleType == .partSolid && viewModel.input.noduleStatus == .growing {
+                LungRADSSettingsRow(
+                    title: "Solid component grew",
+                    accentColor: blueAccent,
+                    trailing: {
+                        Toggle("", isOn: $viewModel.input.solidComponentGrowthDetected)
+                            .labelsHidden()
+                    }
+                )
+            }
         }
     }
 

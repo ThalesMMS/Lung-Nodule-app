@@ -6,7 +6,10 @@ class LungRADSViewModel: ObservableObject {
     typealias CalculationScheduler = (@escaping @MainActor () -> Void) -> Void
 
     @Published var input = LungRADSInput() {
-        didSet { scheduleCalculation() }
+        didSet {
+            clearSolidComponentGrowthIfNeeded()
+            scheduleCalculation()
+        }
     }
     @Published var result: LungRADSResult?
     @Published var sizeText: String = "" {
@@ -85,6 +88,16 @@ class LungRADSViewModel: ObservableObject {
 
     init(calculationScheduler: CalculationScheduler? = nil) {
         self.calculationScheduler = calculationScheduler ?? Self.defaultCalculationScheduler
+    }
+
+    private var allowsSolidComponentGrowthFlag: Bool {
+        input.noduleType == .partSolid && input.noduleStatus == .growing
+    }
+
+    private func clearSolidComponentGrowthIfNeeded() {
+        if input.solidComponentGrowthDetected && !allowsSolidComponentGrowthFlag {
+            input.solidComponentGrowthDetected = false
+        }
     }
 
     var axisMeanDisplay: String {

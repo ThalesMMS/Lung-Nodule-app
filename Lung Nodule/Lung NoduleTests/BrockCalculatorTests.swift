@@ -83,6 +83,30 @@ struct BrockCalculatorTests {
         #expect(BrockCalculator.calculate(input: upperBoundary) != nil)
     }
 
+    @Test func edgeSizeAndAgeProduceFiniteProbabilities() async throws {
+        // Smallest allowed size should still yield a sensible, finite probability.
+        let minSize = try #require(BrockCalculator.calculate(input: makeBrockInput(noduleSizeMm: 3)))
+        #expect(minSize.malignancyProbability.isFinite)
+        #expect(minSize.malignancyProbability >= 0)
+        #expect(minSize.malignancyProbability <= 100)
+
+        // Largest allowed size with high-risk covariates should remain finite and within range.
+        let maxSize = try #require(BrockCalculator.calculate(input: makeBrockInput(
+            age: 90,
+            isFemale: true,
+            noduleSizeMm: 30,
+            noduleType: .partSolid,
+            upperLobe: true,
+            noduleCount: 1,
+            spiculation: true,
+            familyHistory: true,
+            emphysema: true
+        )))
+        #expect(maxSize.malignancyProbability.isFinite)
+        #expect(maxSize.malignancyProbability >= 0)
+        #expect(maxSize.malignancyProbability <= 100)
+    }
+
     @Test func noduleCountVariationChangesRiskMonotonically() async throws {
         let countOne = try #require(BrockCalculator.calculate(input: makeBrockInput(noduleCount: 1)))
         let countFive = try #require(BrockCalculator.calculate(input: makeBrockInput(noduleCount: 5)))
@@ -128,6 +152,33 @@ struct BrockCalculatorTests {
         let result = try #require(BrockCalculator.calculate(input: input))
         #expect(abs(result.malignancyProbability - 0.634830) < 0.0001)
         #expect(result.reference.contains("McWilliams"))
+    }
+
+    @Test func missingOptionalCovariatesDefaultToFalse() async throws {
+        // These covariates are user-provided toggles in the UI. Ensure the default baseline
+        // (all optional covariates false) remains deterministic.
+        let baseline = try #require(BrockCalculator.calculate(input: makeBrockInput(
+            age: 65,
+            isFemale: false,
+            noduleSizeMm: 10,
+            noduleType: .solid,
+            upperLobe: false,
+            noduleCount: 1,
+            spiculation: false,
+            familyHistory: false,
+            emphysema: false
+        )))
+        #expect(abs(baseline.malignancyProbability - 3.468206) < 0.0001)
+        #expect(baseline.riskCategory == .low)
+
+        // Flipping each optional covariate individually should not decrease risk.
+        let spic = try #require(BrockCalculator.calculate(input: makeBrockInput(spiculation: true)))
+        let fam = try #require(BrockCalculator.calculate(input: makeBrockInput(familyHistory: true)))
+        let emph = try #require(BrockCalculator.calculate(input: makeBrockInput(emphysema: true)))
+
+        #expect(spic.malignancyProbability > baseline.malignancyProbability)
+        #expect(fam.malignancyProbability > baseline.malignancyProbability)
+        #expect(emph.malignancyProbability > baseline.malignancyProbability)
     }
 
     // MARK: - Morphology Mapping

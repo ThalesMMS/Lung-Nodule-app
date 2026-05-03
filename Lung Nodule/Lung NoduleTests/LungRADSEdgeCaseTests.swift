@@ -41,7 +41,8 @@ struct LungRADSEdgeCaseTests {
         solidSize: LungRADSSolidComponentSize,
         solidMm: Double? = nil,
         ctStatus: CTStatus = .baseline,
-        noduleStatus: NoduleStatus = .baseline
+        noduleStatus: NoduleStatus = .baseline,
+        solidComponentGrowthDetected: Bool = false
     ) -> LungRADSInput {
         var input = LungRADSInput()
         input.noduleType = .partSolid
@@ -51,6 +52,7 @@ struct LungRADSEdgeCaseTests {
         input.solidComponentMm = solidMm
         input.ctStatus = ctStatus
         input.noduleStatus = noduleStatus
+        input.solidComponentGrowthDetected = solidComponentGrowthDetected
         return input
     }
 
@@ -224,6 +226,43 @@ struct LungRADSEdgeCaseTests {
 
     // MARK: - L032-L043: Part-Solid Nodule Tests
 
+    /// L032a: Growing part-solid with total-size growth but solid component <4mm -> Category 4A (not 4B)
+    @Test func L032a_growingPartSolidSolid3mm() async throws {
+        let result = LungRADSCalculator.calculate(input: makePartSolidInput(size: .eightToFifteen, sizeMm: 12.0, solidSize: .lessThanFour, solidMm: 3.0, ctStatus: .followUp, noduleStatus: .growing))
+        #expect(result.category == .cat4A)
+        #expect(result.additionalNotes?.contains("without solid-component growth") == true)
+    }
+
+    /// L032b: Growing part-solid with solid-component growth and solid component 4mm -> Category 4B
+    @Test func L032b_growingPartSolidSolid4mmWithSolidComponentGrowth() async throws {
+        let result = LungRADSCalculator.calculate(input: makePartSolidInput(
+            size: .eightToFifteen,
+            sizeMm: 12.0,
+            solidSize: .fourToSix,
+            solidMm: 4.0,
+            ctStatus: .followUp,
+            noduleStatus: .growing,
+            solidComponentGrowthDetected: true
+        ))
+        #expect(result.category == .cat4B)
+        #expect(result.additionalNotes?.contains("solid-component growth prioritized") == true)
+    }
+
+    /// L032c: Growing part-solid with existing solid component ≥8mm remains Category 4B even without solid-component growth.
+    @Test func L032c_growingPartSolidSolid8mmWithoutSolidComponentGrowth() async throws {
+        let result = LungRADSCalculator.calculate(input: makePartSolidInput(
+            size: .fifteenToThirty,
+            sizeMm: 20.0,
+            solidSize: .eightPlus,
+            solidMm: 8.0,
+            ctStatus: .followUp,
+            noduleStatus: .growing
+        ))
+        #expect(result.category == .cat4B)
+        #expect(result.additionalNotes?.contains("existing solid component ≥ 8mm") == true)
+    }
+
+
     /// L032: Baseline part-solid 5.9mm (<6) -> Category 2
     @Test func L032_baselinePartSolid5_9mm() async throws {
         let result = LungRADSCalculator.calculate(input: makePartSolidInput(size: .fourToSix, sizeMm: 5.9, solidSize: .lessThanFour))
@@ -272,6 +311,52 @@ struct LungRADSEdgeCaseTests {
         #expect(result.category == .cat4B)
     }
 
+    // MARK: - Stable Part-Solid Reclassification (Lung-RADS v2022)
+
+    /// L041: Follow-up part-solid (base 3) stable -> Category 2 (reclassified)
+    @Test func L041_followUpStablePartSolid_base3_to2() async throws {
+        let result = LungRADSCalculator.calculate(input: makePartSolidInput(
+            size: .eightToFifteen,
+            sizeMm: 10.0,
+            solidSize: .fourToSix,
+            solidMm: 5.9,
+            ctStatus: .followUp,
+            noduleStatus: .stable
+        ))
+        #expect(result.baseCategory == .cat3)
+        #expect(result.category == .cat2)
+        #expect(result.isReclassified == true)
+    }
+
+    /// L042: Follow-up part-solid (base 4A) stable -> Category 3 (reclassified)
+    @Test func L042_followUpStablePartSolid_base4A_to3() async throws {
+        let result = LungRADSCalculator.calculate(input: makePartSolidInput(
+            size: .fifteenToThirty,
+            sizeMm: 20.0,
+            solidSize: .sixToEight,
+            solidMm: 6.0,
+            ctStatus: .followUp,
+            noduleStatus: .stable
+        ))
+        #expect(result.baseCategory == .cat4A)
+        #expect(result.category == .cat3)
+        #expect(result.isReclassified == true)
+    }
+
+    /// L043: Baseline part-solid that meets base-3 criteria should NOT be downgraded -> Category 3
+    @Test func L043_baselinePartSolid_noDowngrade() async throws {
+        let result = LungRADSCalculator.calculate(input: makePartSolidInput(
+            size: .eightToFifteen,
+            sizeMm: 10.0,
+            solidSize: .fourToSix,
+            solidMm: 5.9,
+            ctStatus: .baseline,
+            noduleStatus: .stable
+        ))
+        #expect(result.category == .cat3)
+        #expect(result.isReclassified == false)
+    }
+
     // MARK: - L044-L052: GGO (Non-Solid) Nodule Tests
 
     /// L044: Baseline GGN 10mm (<30) -> Category 2
@@ -316,7 +401,7 @@ struct LungRADSEdgeCaseTests {
         #expect(result.category == .cat2)
     }
 
-    /// L052: GGN doubles in 1 year (suspicious additional feature) -> Category 2
+    /// L052: GGN doubles in 1 year but remains base Category 2, so the general 4X path does not apply.
     @Test func L052_ggnDoublesInOneYear() async throws {
         var input = makeGGOInput(size: .fifteenToThirty, ctStatus: .followUp, noduleStatus: .growing)
         input.hasAdditionalSuspiciousFeatures = true
@@ -375,6 +460,29 @@ struct LungRADSEdgeCaseTests {
         #expect(result.category == .cat4A)
     }
 
+    /// L059: 3-month follow-up of prior segmental airway nodule that resolved -> Category 1
+    /// Per Lung-RADS v2022: resolved endobronchial finding returns to negative.
+    @Test func L059_followUpAirwayResolved() async throws {
+        var input = LungRADSInput()
+        input.noduleType = .airway
+        input.airwayLocation = .segmentalOrProximal
+        input.ctStatus = .followUp
+        input.noduleStatus = .resolved
+        let result = LungRADSCalculator.calculate(input: input)
+        #expect(result.category == .cat1)
+    }
+
+    /// L060: 3-month follow-up of segmental airway nodule that persists -> Category 4B
+    @Test func L060_followUpAirwayPersistent() async throws {
+        var input = LungRADSInput()
+        input.noduleType = .airway
+        input.airwayLocation = .segmentalOrProximal
+        input.ctStatus = .followUp
+        input.noduleStatus = .stable
+        let result = LungRADSCalculator.calculate(input: input)
+        #expect(result.category == .cat4B)
+    }
+
     // MARK: - L062-L066: Atypical Cyst Tests
 
     /// L062: Baseline thick-walled cyst (≥2mm) -> Category 4A
@@ -427,6 +535,14 @@ struct LungRADSEdgeCaseTests {
         input.hasAdditionalSuspiciousFeatures = true
         let result = LungRADSCalculator.calculate(input: input)
         #expect(result.category == .cat4X)
+    }
+
+    /// L074: Benign Category 2 nodules should not be upgraded to 4X solely by suspicious-feature toggle.
+    @Test func L074_category2WithSuspiciousFeaturesDoesNotUpgradeTo4X() async throws {
+        var input = makeSolidInput(size: .lessThanFour, sizeMm: 3.0)
+        input.hasAdditionalSuspiciousFeatures = true
+        let result = LungRADSCalculator.calculate(input: input)
+        #expect(result.category == .cat2)
     }
     
     // MARK: - Perifissural Nodule Tests
