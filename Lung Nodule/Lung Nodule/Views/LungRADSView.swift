@@ -13,7 +13,7 @@ struct LungRADSView: View {
     @State private var selectedReference: ReferenceType?
     @FocusState private var focusedField: FocusField?
     
-    private let blueAccent = Color(red: 0.0, green: 0.478, blue: 1.0)
+    private let blueAccent = Color.lungRADSAccent
 
     private enum FocusField {
         case size
@@ -62,6 +62,7 @@ struct LungRADSView: View {
                 referenceButton
             }
         }
+        .tint(blueAccent)
     }
     
     // MARK: - Result Card Section
@@ -111,7 +112,7 @@ struct LungRADSView: View {
             accentColor: blueAccent,
             trailing: {
                 HStack(spacing: 6) {
-                    TextField("yrs", text: $viewModel.ageText)
+                    TextField("0", text: $viewModel.ageText)
                         .keyboardType(.numberPad)
                         .multilineTextAlignment(.trailing)
                         .foregroundColor(blueAccent)
@@ -120,6 +121,9 @@ struct LungRADSView: View {
                     Text("yrs")
                         .foregroundColor(.gray)
                 }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .background(blueAccent.opacity(0.12), in: Capsule())
             }
         )
 
@@ -138,7 +142,7 @@ struct LungRADSView: View {
                 accentColor: blueAccent,
                 trailing: {
                     HStack(spacing: 6) {
-                        TextField("yrs", text: $viewModel.yearsSinceQuitText)
+                        TextField("0", text: $viewModel.yearsSinceQuitText)
                             .keyboardType(.numberPad)
                             .multilineTextAlignment(.trailing)
                             .foregroundColor(blueAccent)
@@ -147,6 +151,9 @@ struct LungRADSView: View {
                         Text("yrs")
                             .foregroundColor(.gray)
                     }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(blueAccent.opacity(0.12), in: Capsule())
                 }
             )
         }
@@ -155,14 +162,18 @@ struct LungRADSView: View {
     @ViewBuilder
     private var eligibilityNotice: some View {
         if let notice = viewModel.eligibilityNotice {
-            Text(notice)
-                .font(.footnote)
-                .foregroundColor(.orange)
-                .multilineTextAlignment(.leading)
-                .padding()
-                .background(Color(white: 0.15))
-                .cornerRadius(12)
-                .padding(.horizontal, 16)
+            HStack(alignment: .top, spacing: 10) {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .foregroundColor(.orange)
+                Text(notice)
+                    .font(.footnote)
+                    .foregroundColor(.orange)
+                    .multilineTextAlignment(.leading)
+            }
+            .padding()
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .cardStyle(cornerRadius: 12)
+            .padding(.horizontal, 16)
         }
     }
     
@@ -241,7 +252,7 @@ struct LungRADSView: View {
             }
             .padding()
             
-            Divider().background(Color(white: 0.3))
+            Divider().background(Color.subtleDivider)
             
             HStack {
                 Text("Macroscopic Fat in Nodule")
@@ -252,8 +263,7 @@ struct LungRADSView: View {
             }
             .padding()
         }
-        .background(Color(white: 0.15))
-        .cornerRadius(12)
+        .cardStyle(cornerRadius: 12)
         .padding(.horizontal, 16)
     }
 
@@ -311,6 +321,9 @@ struct LungRADSView: View {
                         Text("mm")
                             .foregroundColor(.gray)
                     }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(blueAccent.opacity(0.12), in: Capsule())
                 }
             )
         } else {
@@ -327,9 +340,12 @@ struct LungRADSView: View {
                             Text("mm")
                                 .foregroundColor(.gray)
                         }
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(blueAccent.opacity(0.12), in: Capsule())
                     } else {
                         HStack(spacing: 6) {
-                            TextField("mm", text: $viewModel.sizeText)
+                            TextField("0", text: $viewModel.sizeText)
                                 .keyboardType(.decimalPad)
                                 .multilineTextAlignment(.trailing)
                                 .foregroundColor(blueAccent)
@@ -338,6 +354,9 @@ struct LungRADSView: View {
                             Text("mm")
                                 .foregroundColor(.gray)
                         }
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(blueAccent.opacity(0.12), in: Capsule())
                     }
                 }
             )
@@ -362,7 +381,7 @@ struct LungRADSView: View {
                     accentColor: blueAccent,
                     trailing: {
                         HStack(spacing: 6) {
-                            TextField("mm3", text: $viewModel.volumeText)
+                            TextField("0", text: $viewModel.volumeText)
                                 .keyboardType(.decimalPad)
                                 .multilineTextAlignment(.trailing)
                                 .foregroundColor(blueAccent)
@@ -371,6 +390,9 @@ struct LungRADSView: View {
                             Text("mm3")
                                 .foregroundColor(.gray)
                         }
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(blueAccent.opacity(0.12), in: Capsule())
                     }
                 )
             }
@@ -395,7 +417,7 @@ struct LungRADSView: View {
                     accentColor: blueAccent,
                     trailing: {
                         HStack(spacing: 6) {
-                            TextField("mm", text: $viewModel.longAxisText)
+                            TextField("0", text: $viewModel.longAxisText)
                                 .keyboardType(.decimalPad)
                                 .multilineTextAlignment(.trailing)
                                 .foregroundColor(blueAccent)
@@ -404,6 +426,9 @@ struct LungRADSView: View {
                             Text("mm")
                                 .foregroundColor(.gray)
                         }
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(blueAccent.opacity(0.12), in: Capsule())
                     }
                 )
 
@@ -412,7 +437,7 @@ struct LungRADSView: View {
                     accentColor: blueAccent,
                     trailing: {
                         HStack(spacing: 6) {
-                            TextField("mm", text: $viewModel.shortAxisText)
+                            TextField("0", text: $viewModel.shortAxisText)
                                 .keyboardType(.decimalPad)
                                 .multilineTextAlignment(.trailing)
                                 .foregroundColor(blueAccent)
@@ -421,6 +446,9 @@ struct LungRADSView: View {
                             Text("mm")
                                 .foregroundColor(.gray)
                         }
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(blueAccent.opacity(0.12), in: Capsule())
                     }
                 )
             }
@@ -458,7 +486,7 @@ struct LungRADSView: View {
                 onInfoTap: { showSolidComponentInfo = true },
                 trailing: {
                     HStack(spacing: 6) {
-                        TextField("mm", text: $viewModel.solidComponentText)
+                        TextField("0", text: $viewModel.solidComponentText)
                             .keyboardType(.decimalPad)
                             .multilineTextAlignment(.trailing)
                             .foregroundColor(blueAccent)
@@ -467,6 +495,9 @@ struct LungRADSView: View {
                         Text("mm")
                             .foregroundColor(.gray)
                     }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(blueAccent.opacity(0.12), in: Capsule())
                 }
             )
         }
@@ -532,6 +563,9 @@ struct LungRADSView: View {
                             Text("mm")
                                 .foregroundColor(.gray)
                         }
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(blueAccent.opacity(0.12), in: Capsule())
                     }
                 )
 
@@ -540,7 +574,7 @@ struct LungRADSView: View {
                     accentColor: blueAccent,
                     trailing: {
                         HStack(spacing: 6) {
-                            TextField("mm", text: $viewModel.priorSizeText)
+                            TextField("0", text: $viewModel.priorSizeText)
                                 .keyboardType(.decimalPad)
                                 .multilineTextAlignment(.trailing)
                                 .foregroundColor(blueAccent)
@@ -549,6 +583,9 @@ struct LungRADSView: View {
                             Text("mm")
                                 .foregroundColor(.gray)
                         }
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(blueAccent.opacity(0.12), in: Capsule())
                     }
                 )
 
@@ -614,85 +651,61 @@ struct LungRADSResultCard: View {
     let onSModifierTap: () -> Void
     let onBrockTap: (() -> Void)?
     
+    private var severityColor: Color { result.category.severityColor }
+
     var body: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: 14) {
             Text(managementText)
-                .font(.system(size: 16, weight: .medium))
-                .foregroundColor(.white)
-            
-            progressBar
-            
+                .font(.system(size: 13, weight: .semibold))
+                .tracking(0.5)
+                .textCase(.uppercase)
+                .foregroundColor(.white.opacity(0.55))
+
             Text(categoryDisplay)
-                .font(.system(size: 120, weight: .bold))
-                .foregroundColor(Color(red: 0.2, green: 0.8, blue: 0.2))
-                .padding(.vertical, 8)
-            
+                .font(.system(size: 84, weight: .bold, design: .rounded))
+                .foregroundStyle(severityColor)
+                .lineLimit(1)
+                .minimumScaleFactor(0.4)
+
             Text(result.category.description)
-                .font(.system(size: 20, weight: .medium))
-                .foregroundColor(Color(red: 0.2, green: 0.8, blue: 0.2))
+                .font(.system(size: 17, weight: .semibold))
+                .foregroundColor(severityColor)
+                .multilineTextAlignment(.center)
+
+            SeverityBar(color: severityColor)
 
             if let notes = result.additionalNotes, !notes.isEmpty {
                 Text(notes)
                     .font(.footnote)
-                    .foregroundColor(.gray)
+                    .foregroundColor(.white.opacity(0.55))
                     .multilineTextAlignment(.center)
                     .padding(.top, 4)
             }
 
-            if let onBrockTap {
-                Button(action: onBrockTap) {
-                    HStack {
-                        Image(systemName: "waveform.path.ecg")
-                            .foregroundColor(blueAccent)
-                        Text("Calculate Malignancy Risk (Brock)")
-                            .foregroundColor(blueAccent)
-                    }
+            VStack(spacing: 10) {
+                if let onBrockTap {
+                    PillButton(
+                        title: "Calculate Malignancy Risk (Brock)",
+                        icon: "waveform.path.ecg",
+                        accentColor: blueAccent,
+                        action: onBrockTap
+                    )
                 }
-                .padding(.top, 8)
+
+                PillButton(
+                    title: "S Modifier Considerations",
+                    icon: "plus.circle",
+                    accentColor: blueAccent,
+                    action: onSModifierTap
+                )
             }
-            
-            Button(action: onSModifierTap) {
-                HStack {
-                    Image(systemName: "plus.circle")
-                        .foregroundColor(blueAccent)
-                    Text("S Modifier Considerations")
-                        .foregroundColor(blueAccent)
-                }
-            }
-            .padding(.top, 12)
+            .padding(.top, 8)
         }
         .padding(20)
-        .background(Color(white: 0.15))
-        .cornerRadius(16)
+        .cardStyle()
         .padding(.horizontal, 16)
     }
-    
-    private var progressBar: some View {
-        GeometryReader { geo in
-            ZStack(alignment: .leading) {
-                RoundedRectangle(cornerRadius: 4)
-                    .fill(Color(white: 0.3))
-                    .frame(height: 8)
-                
-                RoundedRectangle(cornerRadius: 4)
-                    .fill(Color(red: 0.2, green: 0.8, blue: 0.2))
-                    .frame(width: geo.size.width, height: 8)
-                
-                Circle()
-                    .fill(Color.white)
-                    .frame(width: 16, height: 16)
-                    .offset(x: -8)
-                
-                Circle()
-                    .fill(Color.white)
-                    .frame(width: 16, height: 16)
-                    .offset(x: geo.size.width - 8)
-            }
-        }
-        .frame(height: 20)
-        .padding(.horizontal, 8)
-    }
-    
+
     private var managementText: String {
         if result.management.contains("12 months") || result.management.contains("annual") {
             return "12mo LDCT"
@@ -730,11 +743,14 @@ struct LungRADSMenuPicker: View {
         } label: {
             HStack(spacing: 4) {
                 Text(selection)
-                    .foregroundColor(accentColor)
+                    .font(.subheadline.weight(.semibold))
                 Image(systemName: "chevron.up.chevron.down")
-                    .font(.caption)
-                    .foregroundColor(accentColor)
+                    .font(.caption2.weight(.bold))
             }
+            .foregroundColor(accentColor)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(accentColor.opacity(0.12), in: Capsule())
         }
     }
 }
@@ -765,8 +781,7 @@ struct LungRADSSettingsRow<Trailing: View>: View {
             trailing()
         }
         .padding()
-        .background(Color(white: 0.15))
-        .cornerRadius(12)
+        .cardStyle(cornerRadius: 12)
         .padding(.horizontal, 16)
     }
 }
@@ -774,7 +789,7 @@ struct LungRADSSettingsRow<Trailing: View>: View {
 // CT Status Info View - detailed explanation sheet
 struct CTStatusInfoView: View {
     @Environment(\.dismiss) private var dismiss
-    private let blueAccent = Color(red: 0.0, green: 0.478, blue: 1.0)
+    private let blueAccent = Color.lungRADSAccent
     
     var body: some View {
         NavigationStack {
@@ -789,8 +804,7 @@ struct CTStatusInfoView: View {
                     }
                     .padding()
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Color(white: 0.15))
-                    .cornerRadius(12)
+                    .cardStyle(cornerRadius: 12)
                     
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Select **Follow-Up CT** if current CT is:")
@@ -810,8 +824,7 @@ struct CTStatusInfoView: View {
                     }
                     .padding()
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Color(white: 0.15))
-                    .cornerRadius(12)
+                    .cardStyle(cornerRadius: 12)
                     
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Select **Awaiting Comparison CT** if a prior CT exists but has not been reviewed yet")
@@ -819,8 +832,7 @@ struct CTStatusInfoView: View {
                     }
                     .padding()
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Color(white: 0.15))
-                    .cornerRadius(12)
+                    .cardStyle(cornerRadius: 12)
                     
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Select **Incomplete CT** if current LDCT is technically limited (e.g., respiratory motion, partially imaged lung apices or bases)")
@@ -828,12 +840,11 @@ struct CTStatusInfoView: View {
                     }
                     .padding()
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Color(white: 0.15))
-                    .cornerRadius(12)
+                    .cardStyle(cornerRadius: 12)
                 }
                 .padding()
             }
-            .background(Color.black)
+            .background(AppBackdrop())
             .navigationTitle("LCS CT Status")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -845,6 +856,7 @@ struct CTStatusInfoView: View {
                 }
             }
         }
+        .tint(blueAccent)
     }
 }
 

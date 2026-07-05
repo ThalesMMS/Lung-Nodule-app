@@ -16,7 +16,7 @@ struct BrockView: View {
     @Binding var form: BrockFormState
     @State private var selectedReference: ReferenceType?
     @FocusState private var focusedField: FocusField?
-    private let blueAccent = Color(red: 0.0, green: 0.478, blue: 1.0)
+    private let blueAccent = Color.lungRADSAccent
 
     private enum FocusField {
         case age
@@ -32,8 +32,7 @@ struct BrockView: View {
                 .multilineTextAlignment(.center)
                 .padding()
                 .frame(maxWidth: .infinity)
-                .background(Color(white: 0.15))
-                .cornerRadius(12)
+                .cardStyle(cornerRadius: 12)
                 .padding(.horizontal, 16)
 
             patientSection
@@ -44,6 +43,7 @@ struct BrockView: View {
 
             Spacer()
         }
+        .tint(blueAccent)
         .referencePresenter(reference: $selectedReference)
         .toolbar {
             ToolbarItemGroup(placement: .keyboard) {
@@ -79,7 +79,7 @@ struct BrockView: View {
                 }
                 .padding()
 
-                Divider().background(Color(white: 0.3))
+                Divider().background(Color.subtleDivider)
 
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Gender")
@@ -91,11 +91,11 @@ struct BrockView: View {
                         Text("Female").tag(1)
                     }
                     .pickerStyle(.segmented)
+                    .tint(blueAccent)
                 }
                 .padding()
             }
-            .background(Color(white: 0.15))
-            .cornerRadius(12)
+            .cardStyle(cornerRadius: 12)
             .padding(.horizontal)
         }
     }
@@ -125,7 +125,7 @@ struct BrockView: View {
                 }
                 .padding()
 
-                Divider().background(Color(white: 0.3))
+                Divider().background(Color.subtleDivider)
 
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Nodule morphology")
@@ -138,10 +138,11 @@ struct BrockView: View {
                         }
                     }
                     .pickerStyle(.segmented)
+                    .tint(blueAccent)
                 }
                 .padding()
 
-                Divider().background(Color(white: 0.3))
+                Divider().background(Color.subtleDivider)
 
                 HStack {
                     Text("Upper lobe")
@@ -152,13 +153,13 @@ struct BrockView: View {
                 }
                 .padding()
 
-                Divider().background(Color(white: 0.3))
+                Divider().background(Color.subtleDivider)
 
                 HStack {
                     Text("Nodule count (>= 1), no decimal")
                         .foregroundColor(.white)
                     Spacer()
-                    TextField("#", text: $form.noduleCount)
+                    TextField("0", text: $form.noduleCount)
                         .keyboardType(.numberPad)
                         .multilineTextAlignment(.trailing)
                         .foregroundColor(.gray)
@@ -167,7 +168,7 @@ struct BrockView: View {
                 }
                 .padding()
 
-                Divider().background(Color(white: 0.3))
+                Divider().background(Color.subtleDivider)
 
                 HStack {
                     Text("Spiculation")
@@ -178,8 +179,7 @@ struct BrockView: View {
                 }
                 .padding()
             }
-            .background(Color(white: 0.15))
-            .cornerRadius(12)
+            .cardStyle(cornerRadius: 12)
             .padding(.horizontal)
         }
     }
@@ -203,7 +203,7 @@ struct BrockView: View {
                 }
                 .padding()
 
-                Divider().background(Color(white: 0.3))
+                Divider().background(Color.subtleDivider)
 
                 HStack {
                     Text("Emphysema")
@@ -214,8 +214,7 @@ struct BrockView: View {
                 }
                 .padding()
             }
-            .background(Color(white: 0.15))
-            .cornerRadius(12)
+            .cardStyle(cornerRadius: 12)
             .padding(.horizontal)
         }
     }
@@ -250,8 +249,7 @@ struct BrockView: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding()
-            .background(Color(white: 0.15))
-            .cornerRadius(12)
+            .cardStyle(cornerRadius: 12)
             .padding(.horizontal)
         }
     }

@@ -56,15 +56,18 @@ struct FleischnerView: View {
                     onInfoTap: { showSolidComponentInfo = true },
                     trailing: {
                         HStack(spacing: 6) {
-                            TextField("mm", text: $viewModel.solidComponentText)
+                            TextField("0", text: $viewModel.solidComponentText)
                                 .keyboardType(.decimalPad)
                                 .multilineTextAlignment(.trailing)
-                                .foregroundColor(Color(red: 0.2, green: 0.8, blue: 0.2))
+                                .foregroundColor(Color.fleischnerAccent)
                                 .frame(width: 70)
                                 .focused($focusedField, equals: .solidComponent)
                             Text("mm")
                                 .foregroundColor(.gray)
                         }
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(Color.fleischnerAccent.opacity(0.12), in: Capsule())
                     }
                 )
             }
@@ -83,12 +86,13 @@ struct FleischnerView: View {
             // Reference link
             Button(action: { selectedReference = .fleischnerGuideline }) {
                 Text("Reference")
-                    .foregroundColor(Color(red: 0.2, green: 0.8, blue: 0.2))
+                    .foregroundColor(Color.fleischnerAccent)
             }
             .padding(.top, 8)
             
             Spacer()
         }
+        .tint(Color.fleischnerAccent)
         .onAppear { viewModel.calculate() }
         .onChange(of: viewModel.input.noduleType) { _, _ in viewModel.calculate() }
         .onChange(of: viewModel.input.sizeCategory) { _, _ in viewModel.calculate() }
@@ -102,7 +106,7 @@ struct FleischnerView: View {
             ToolbarItemGroup(placement: .keyboard) {
                 Spacer()
                 Button("Done") { focusedField = nil }
-                    .foregroundColor(Color(red: 0.2, green: 0.8, blue: 0.2))
+                    .foregroundColor(Color.fleischnerAccent)
             }
         }
         .alert("Nodule Morphology", isPresented: $showMorphologyInfo) {
@@ -147,75 +151,35 @@ struct FleischnerView: View {
     @ViewBuilder
     private var resultCard: some View {
         if let result = viewModel.result {
-            VStack(spacing: 12) {
-                Text(primaryRecommendation(from: result.recommendation))
-                    .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(.white)
+            let severityColor = FleischnerSeverity.color(for: result.recommendation)
 
-                GeometryReader { geo in
-                    ZStack(alignment: .leading) {
-                        RoundedRectangle(cornerRadius: 4)
-                            .fill(Color(white: 0.3))
-                            .frame(height: 8)
+            VStack(spacing: 14) {
+                HStack(alignment: .top, spacing: 12) {
+                    Image(systemName: FleischnerSeverity.icon(for: result.recommendation))
+                        .font(.system(size: 20, weight: .semibold))
+                        .foregroundColor(severityColor)
+                        .frame(width: 44, height: 44)
+                        .background(severityColor.opacity(0.15), in: Circle())
 
-                        RoundedRectangle(cornerRadius: 4)
-                            .fill(Color(red: 0.2, green: 0.8, blue: 0.2))
-                            .frame(width: progressWidth(for: result.recommendation, in: geo.size.width), height: 8)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(primaryRecommendation(from: result.recommendation))
+                            .font(.system(size: 17, weight: .semibold))
+                            .foregroundColor(.white)
 
-                        Circle()
-                            .fill(Color.white)
-                            .frame(width: 16, height: 16)
-                            .offset(x: knobOffset(for: result.recommendation, in: geo.size.width, isStart: true))
-
-                        Circle()
-                            .fill(Color.white)
-                            .frame(width: 16, height: 16)
-                            .offset(x: knobOffset(for: result.recommendation, in: geo.size.width, isStart: false))
-                    }
-                }
-                .frame(height: 20)
-                .padding(.horizontal, 8)
-
-                if hasSecondaryRecommendation(result.recommendation) {
-                    Text(secondaryRecommendation(from: result.recommendation))
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(.white)
-                        .padding(.top, 8)
-
-                    HStack(spacing: 2) {
-                        ForEach(0..<15, id: \.self) { _ in
-                            Rectangle()
-                                .fill(Color(red: 0.2, green: 0.8, blue: 0.2))
-                                .frame(height: 12)
+                        if hasSecondaryRecommendation(result.recommendation) {
+                            Text(secondaryRecommendation(from: result.recommendation))
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundColor(.white.opacity(0.6))
                         }
                     }
-                    .padding(.horizontal, 8)
-                    .overlay(
-                        HStack {
-                            Circle()
-                                .fill(Color.white)
-                                .frame(width: 14, height: 14)
-                            Spacer()
-                            Circle()
-                                .fill(Color.white)
-                                .frame(width: 14, height: 14)
-                        }
-                        .padding(.horizontal, 4)
-                    )
+
+                    Spacer(minLength: 0)
                 }
 
-                VStack(spacing: 8) {
-                    ForEach(0..<4, id: \.self) { _ in
-                        RoundedRectangle(cornerRadius: 4)
-                            .fill(Color(white: 0.35))
-                            .frame(height: 20)
-                    }
-                }
-                .padding(.top, 12)
+                SeverityBar(color: severityColor, maxWidth: .infinity)
             }
             .padding(20)
-            .background(Color(white: 0.15))
-            .cornerRadius(16)
+            .cardStyle()
             .padding(.horizontal, 16)
         }
     }
@@ -235,11 +199,14 @@ struct FleischnerView: View {
                 } label: {
                     HStack(spacing: 4) {
                         Text(viewModel.input.noduleType.rawValue)
-                            .foregroundColor(Color(red: 0.2, green: 0.8, blue: 0.2))
+                            .font(.subheadline.weight(.semibold))
                         Image(systemName: "chevron.up.chevron.down")
-                            .font(.caption)
-                            .foregroundColor(Color(red: 0.2, green: 0.8, blue: 0.2))
+                            .font(.caption2.weight(.bold))
                     }
+                    .foregroundColor(Color.fleischnerAccent)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(Color.fleischnerAccent.opacity(0.12), in: Capsule())
                 }
             }
         )
@@ -263,21 +230,27 @@ struct FleischnerView: View {
                 if viewModel.useAxisMeasurements {
                     HStack(spacing: 6) {
                         Text(viewModel.axisMeanDisplay)
-                            .foregroundColor(Color(red: 0.2, green: 0.8, blue: 0.2))
+                            .foregroundColor(Color.fleischnerAccent)
                         Text("mm")
                             .foregroundColor(.gray)
                     }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(Color.fleischnerAccent.opacity(0.12), in: Capsule())
                 } else {
                     HStack(spacing: 6) {
-                        TextField("mm", text: $viewModel.sizeText)
+                        TextField("0", text: $viewModel.sizeText)
                             .keyboardType(.decimalPad)
                             .multilineTextAlignment(.trailing)
-                            .foregroundColor(Color(red: 0.2, green: 0.8, blue: 0.2))
+                            .foregroundColor(Color.fleischnerAccent)
                             .frame(width: 70)
                             .focused($focusedField, equals: .size)
                         Text("mm")
                             .foregroundColor(.gray)
                     }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(Color.fleischnerAccent.opacity(0.12), in: Capsule())
                 }
             }
         )
@@ -300,15 +273,18 @@ struct FleischnerView: View {
                 title: "Long axis",
                 trailing: {
                     HStack(spacing: 6) {
-                        TextField("mm", text: $viewModel.longAxisText)
+                        TextField("0", text: $viewModel.longAxisText)
                             .keyboardType(.decimalPad)
                             .multilineTextAlignment(.trailing)
-                            .foregroundColor(Color(red: 0.2, green: 0.8, blue: 0.2))
+                            .foregroundColor(Color.fleischnerAccent)
                             .frame(width: 70)
                             .focused($focusedField, equals: .longAxis)
                         Text("mm")
                             .foregroundColor(.gray)
                     }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(Color.fleischnerAccent.opacity(0.12), in: Capsule())
                 }
             )
 
@@ -316,15 +292,18 @@ struct FleischnerView: View {
                 title: "Short axis",
                 trailing: {
                     HStack(spacing: 6) {
-                        TextField("mm", text: $viewModel.shortAxisText)
+                        TextField("0", text: $viewModel.shortAxisText)
                             .keyboardType(.decimalPad)
                             .multilineTextAlignment(.trailing)
-                            .foregroundColor(Color(red: 0.2, green: 0.8, blue: 0.2))
+                            .foregroundColor(Color.fleischnerAccent)
                             .frame(width: 70)
                             .focused($focusedField, equals: .shortAxis)
                         Text("mm")
                             .foregroundColor(.gray)
                     }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(Color.fleischnerAccent.opacity(0.12), in: Capsule())
                 }
             )
         }
@@ -391,7 +370,7 @@ struct FleischnerHighRiskChecklistView: View {
     @Binding var exposureHistory: Bool
     @Binding var familyHistory: Bool
 
-    private let greenAccent = Color(red: 0.2, green: 0.8, blue: 0.2)
+    private let greenAccent = Color.fleischnerAccent
 
     var body: some View {
         NavigationStack {
@@ -408,27 +387,27 @@ struct FleischnerHighRiskChecklistView: View {
                         isOn: $smokingHistory
                     )
 
-                    Divider().background(Color(white: 0.3))
+                    Divider().background(Color.subtleDivider)
 
                     toggleRow(
                         title: "Asbestos/radon/uranium exposure",
                         isOn: $exposureHistory
                     )
 
-                    Divider().background(Color(white: 0.3))
+                    Divider().background(Color.subtleDivider)
 
                     toggleRow(
                         title: "First-degree relative with lung cancer",
                         isOn: $familyHistory
                     )
                 }
-                .background(Color(white: 0.15))
-                .cornerRadius(12)
+                .cardStyle(cornerRadius: 12)
                 .padding(.horizontal, 16)
 
                 Spacer()
             }
             .padding(.top, 16)
+            .background(AppBackdrop())
             .navigationTitle("High Risk Checklist")
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
@@ -441,6 +420,7 @@ struct FleischnerHighRiskChecklistView: View {
             .onChange(of: exposureHistory) { _, _ in updateRisk() }
             .onChange(of: familyHistory) { _, _ in updateRisk() }
         }
+        .tint(greenAccent)
     }
 
     private func toggleRow(title: String, isOn: Binding<Bool>) -> some View {
@@ -467,25 +447,24 @@ struct FleischnerSettingsRow<Trailing: View>: View {
     @ViewBuilder let trailing: () -> Trailing
     
     var body: some View {
-        HStack {
+        HStack(spacing: 8) {
             Text(title)
                 .foregroundColor(.white)
-            
+
             if hasInfo {
                 Button(action: { onInfoTap?() }) {
                     Image(systemName: "info.circle")
                         .font(.caption)
-                        .foregroundColor(Color(red: 0.2, green: 0.8, blue: 0.2))
+                        .foregroundColor(Color.fleischnerAccent)
                 }
             }
-            
+
             Spacer()
-            
+
             trailing()
         }
         .padding()
-        .background(Color(white: 0.15))
-        .cornerRadius(12)
+        .cardStyle(cornerRadius: 12)
         .padding(.horizontal, 16)
     }
 }

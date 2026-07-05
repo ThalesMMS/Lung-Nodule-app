@@ -51,7 +51,7 @@ struct SModifierConsiderationsView: View {
     // Other
     @State private var otherFindings = false
     
-    private let blueAccent = Color(red: 0.0, green: 0.478, blue: 1.0)
+    private let blueAccent = Color.lungRADSAccent
     
     var body: some View {
         NavigationStack {
@@ -75,7 +75,7 @@ struct SModifierConsiderationsView: View {
                             isOn: $fibroticILD
                         )
                         
-                        Divider().background(Color(white: 0.3))
+                        Divider().background(Color.subtleDivider)
                         
                         SModifierToggleItem(
                             title: "Bronchiectasis / Ground-glass opacity / Cystic lung disease / Diffuse nodular disease",
@@ -83,7 +83,7 @@ struct SModifierConsiderationsView: View {
                             isOn: $bronchiectasis
                         )
                         
-                        Divider().background(Color(white: 0.3))
+                        Divider().background(Color.subtleDivider)
                         
                         SModifierToggleItem(
                             title: "Emphysema/Bronchial wall thickening (Expected findings)",
@@ -91,7 +91,7 @@ struct SModifierConsiderationsView: View {
                             isOn: $emphysema
                         )
                         
-                        Divider().background(Color(white: 0.3))
+                        Divider().background(Color.subtleDivider)
                         
                         SModifierToggleItem(
                             title: "New pleural disease – effusion, thickening, mass",
@@ -108,7 +108,7 @@ struct SModifierConsiderationsView: View {
                             isOn: $ascendingAorta
                         )
                         
-                        Divider().background(Color(white: 0.3))
+                        Divider().background(Color.subtleDivider)
                         
                         SModifierToggleItem(
                             title: "Moderate or large pericardial effusion",
@@ -116,7 +116,7 @@ struct SModifierConsiderationsView: View {
                             isOn: $pericardialEffusion
                         )
                         
-                        Divider().background(Color(white: 0.3))
+                        Divider().background(Color.subtleDivider)
                         
                         SModifierToggleItem(
                             title: "Other abnormalities (e.g., moderate or greater aortic valve calcification)",
@@ -124,7 +124,7 @@ struct SModifierConsiderationsView: View {
                             isOn: $aorticValveCalcification
                         )
                         
-                        Divider().background(Color(white: 0.3))
+                        Divider().background(Color.subtleDivider)
                         
                         SModifierToggleItem(
                             title: "Coronary artery calcifications present",
@@ -132,7 +132,7 @@ struct SModifierConsiderationsView: View {
                             isOn: $coronaryCalcifications
                         )
                         
-                        Divider().background(Color(white: 0.3))
+                        Divider().background(Color.subtleDivider)
                         
                         SModifierToggleItem(
                             title: "Main pulmonary artery measurement ≥ 31 mm",
@@ -149,7 +149,7 @@ struct SModifierConsiderationsView: View {
                             isOn: $lymphNodes
                         )
                         
-                        Divider().background(Color(white: 0.3))
+                        Divider().background(Color.subtleDivider)
                         
                         SModifierToggleItem(
                             title: "Mass (soft tissue or mixed density)",
@@ -166,7 +166,7 @@ struct SModifierConsiderationsView: View {
                             isOn: $hiatalHernia
                         )
                         
-                        Divider().background(Color(white: 0.3))
+                        Divider().background(Color.subtleDivider)
                         
                         SModifierToggleItem(
                             title: "Focal wall thickening or mass",
@@ -183,7 +183,7 @@ struct SModifierConsiderationsView: View {
                             isOn: $osteopenia
                         )
                         
-                        Divider().background(Color(white: 0.3))
+                        Divider().background(Color.subtleDivider)
                         
                         SModifierToggleItem(
                             title: "< 100 HU at L1 (Osteoporosis)",
@@ -214,7 +214,7 @@ struct SModifierConsiderationsView: View {
                             isOn: $liverLesion
                         )
                         
-                        Divider().background(Color(white: 0.3))
+                        Divider().background(Color.subtleDivider)
                         
                         SModifierToggleItem(
                             title: "Fatty liver/hepatic steatosis or cirrhosis",
@@ -274,7 +274,7 @@ struct SModifierConsiderationsView: View {
                 .padding(.top, 16)
                 .padding(.bottom, 40)
             }
-            .background(Color.black)
+            .background(AppBackdrop())
             .navigationTitle("Select Incidental Finding(s)")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -293,6 +293,7 @@ struct SModifierConsiderationsView: View {
                 }
             }
         }
+        .tint(blueAccent)
         .onDisappear {
             updateHasSModifierFindings()
         }
@@ -363,31 +364,33 @@ struct SModifierSection<Content: View>: View {
     let icon: String
     @ViewBuilder let content: () -> Content
     
-    private let blueAccent = Color(red: 0.0, green: 0.478, blue: 1.0)
+    private let blueAccent = Color.lungRADSAccent
     
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             // Section Header
             HStack(spacing: 12) {
                 Image(systemName: icon)
-                    .font(.title2)
+                    .font(.system(size: 15, weight: .semibold))
                     .foregroundColor(blueAccent)
+                    .frame(width: 32, height: 32)
+                    .background(blueAccent.opacity(0.15), in: Circle())
                 Text(title)
                     .font(.headline)
-                    .fontWeight(.bold)
                     .foregroundColor(.white)
+                Spacer(minLength: 0)
             }
             .padding()
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color(white: 0.1))
-            
+
+            Divider().background(Color.subtleDivider)
+
             // Section Content
             VStack(alignment: .leading, spacing: 0) {
                 content()
             }
-            .background(Color(white: 0.15))
         }
-        .cornerRadius(12)
+        .cardStyle(cornerRadius: 12)
         .padding(.horizontal)
     }
 }

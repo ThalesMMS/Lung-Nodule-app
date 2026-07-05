@@ -1,10 +1,5 @@
 import SwiftUI
 
-private extension Color {
-    static var fleischnerAccent: Color { Color(red: 0.2, green: 0.8, blue: 0.2) }
-    static var lungRADSAccent: Color { Color(red: 0.0, green: 0.478, blue: 1.0) }
-}
-
 // MARK: - Fleischner Common Issues Detail Views
 
 struct FleischnerEligibilityDetailView: View {
@@ -18,7 +13,7 @@ struct FleischnerEligibilityDetailView: View {
                             title: "Purpose",
                             description: "Management of incidentally detected pulmonary nodules on CT in routine clinical practice."
                         )
-                        Divider().background(Color(white: 0.3))
+                        Divider().background(Color.subtleDivider)
                         DetailItem(
                             title: "Age Requirement",
                             description: "Applicable to patients 35 years of age and older."
@@ -33,12 +28,12 @@ struct FleischnerEligibilityDetailView: View {
                             title: "Known or Suspected Cancer",
                             description: "These guidelines do not apply to patients with a diagnosed or highly suspected malignancy."
                         )
-                        Divider().background(Color(white: 0.3))
+                        Divider().background(Color.subtleDivider)
                         DetailItem(
                             title: "Immunocompromised Patients",
                             description: "These guidelines do not apply to patients with weakened immune systems."
                         )
-                        Divider().background(Color(white: 0.3))
+                        Divider().background(Color.subtleDivider)
                         DetailItem(
                             title: "Lung Cancer Screening",
                             description: "These guidelines do not apply to patients in a dedicated lung cancer screening program."
@@ -50,7 +45,7 @@ struct FleischnerEligibilityDetailView: View {
             }
             .padding(.top, 16)
         }
-        .background(Color.black)
+        .background(AppBackdrop())
         .navigationTitle("Eligibility")
         .navigationBarTitleDisplayMode(.inline)
     }
@@ -67,17 +62,17 @@ struct FleischnerMeasuringNodulesDetailView: View {
                             title: "Nearest Whole Millimeter",
                             description: "Both measurements and averages should be expressed to the nearest whole millimeter."
                         )
-                        Divider().background(Color(white: 0.3))
+                        Divider().background(Color.subtleDivider)
                         DetailItem(
                             title: "≥2 mm Threshold for Change in Size",
                             description: "A size change can be reported when average diameter has increased or decreased by at least 2 mm (rounded to the nearest millimeter)."
                         )
-                        Divider().background(Color(white: 0.3))
+                        Divider().background(Color.subtleDivider)
                         DetailItem(
                             title: "Orthogonal ≤1.5 mm Sections",
                             description: "Use ≤1.5 mm sections in axial orientation, unless maximal dimension is in coronal or sagittal plane. Avoid off-axis oblique reformations."
                         )
-                        Divider().background(Color(white: 0.3))
+                        Divider().background(Color.subtleDivider)
                         DetailItem(
                             title: "Lung Windows and Sharp Filters",
                             description: "Measure on lung windows using a sharp filter."
@@ -92,7 +87,7 @@ struct FleischnerMeasuringNodulesDetailView: View {
                             title: "Do Not Measure Micronodules",
                             description: "<3 mm nodules should not be measured. \"Micronodule\" descriptor preferred."
                         )
-                        Divider().background(Color(white: 0.3))
+                        Divider().background(Color.subtleDivider)
                         DetailItem(
                             title: "3-9 mm: Report Average Diameter",
                             description: "Express dimensions as average of maximal long-axis and perpendicular maximal short-axis in same plane."
@@ -104,7 +99,7 @@ struct FleischnerMeasuringNodulesDetailView: View {
             }
             .padding(.top, 16)
         }
-        .background(Color.black)
+        .background(AppBackdrop())
         .navigationTitle("Measuring Nodules")
         .navigationBarTitleDisplayMode(.inline)
     }
@@ -131,14 +126,14 @@ struct FleischnerPerifissuralNodulesDetailView: View {
                         }
                         .padding()
                         
-                        Divider().background(Color(white: 0.3))
+                        Divider().background(Color.subtleDivider)
                         
                         DetailItem(
                             title: "No Followup for Most Characteristic Intrapulmonary Lymph Nodes",
                             description: "Small nodules with location and shape in keeping with intrapulmonary lymph node (even if >6 mm) require no followup."
                         )
                         
-                        Divider().background(Color(white: 0.3))
+                        Divider().background(Color.subtleDivider)
                         
                         DetailItem(
                             title: "6–12 Month Followup if Cancer History or Suspicious Appearance",
@@ -151,7 +146,7 @@ struct FleischnerPerifissuralNodulesDetailView: View {
             }
             .padding(.top, 16)
         }
-        .background(Color.black)
+        .background(AppBackdrop())
         .navigationTitle("Perifissural Nodules")
         .navigationBarTitleDisplayMode(.inline)
     }
@@ -210,7 +205,7 @@ struct FleischnerNoduleDensityDetailView: View {
             }
             .padding(.top, 16)
         }
-        .background(Color.black)
+        .background(AppBackdrop())
         .navigationTitle("Nodule Density")
         .navigationBarTitleDisplayMode(.inline)
     }
@@ -242,8 +237,7 @@ struct FleischnerCalcificationPatternsDetailView: View {
                         }
                     }
                     .padding()
-                    .background(Color(white: 0.15))
-                    .cornerRadius(12)
+                    .cardStyle(cornerRadius: 12)
                     .padding(.horizontal)
                 }
                 
@@ -260,8 +254,7 @@ struct FleischnerCalcificationPatternsDetailView: View {
                         CalcificationPatternItem(title: "STIPPLED")
                     }
                     .padding()
-                    .background(Color(white: 0.15))
-                    .cornerRadius(12)
+                    .cardStyle(cornerRadius: 12)
                     .padding(.horizontal)
                 }
                 
@@ -269,7 +262,7 @@ struct FleischnerCalcificationPatternsDetailView: View {
             }
             .padding(.top, 16)
         }
-        .background(Color.black)
+        .background(AppBackdrop())
         .navigationTitle("Calcification Patterns")
         .navigationBarTitleDisplayMode(.inline)
     }
@@ -303,7 +296,7 @@ struct FleischnerApicalScarringDetailView: View {
                             title: "Coronal & Sagittal Images May Help",
                             description: "Review of coronal and sagittal reconstructions can often help increase confidence."
                         )
-                        Divider().background(Color(white: 0.3))
+                        Divider().background(Color.subtleDivider)
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Features Suggestive of Scar")
                                 .font(.headline)
@@ -325,7 +318,7 @@ struct FleischnerApicalScarringDetailView: View {
             }
             .padding(.top, 16)
         }
-        .background(Color.black)
+        .background(AppBackdrop())
         .navigationTitle("Apical Scarring")
         .navigationBarTitleDisplayMode(.inline)
     }
@@ -341,12 +334,12 @@ struct FleischnerNeckAbdomenCTsDetailView: View {
                             title: "1–5 mm",
                             description: "No further investigation recommended."
                         )
-                        Divider().background(Color(white: 0.3))
+                        Divider().background(Color.subtleDivider)
                         DetailItem(
                             title: "6–8 mm",
                             description: "If stability cannot be confirmed by retrospective review of an older study, obtain followup chest CT at interval appropriate for nodule of this size."
                         )
-                        Divider().background(Color(white: 0.3))
+                        Divider().background(Color.subtleDivider)
                         DetailItem(
                             title: ">8 mm",
                             description: "Obtain complete chest CT."
@@ -358,7 +351,7 @@ struct FleischnerNeckAbdomenCTsDetailView: View {
             }
             .padding(.top, 16)
         }
-        .background(Color.black)
+        .background(AppBackdrop())
         .navigationTitle("Neck/Abdomen CTs")
         .navigationBarTitleDisplayMode(.inline)
     }
@@ -377,12 +370,12 @@ struct LungRADSEligibilityDetailView: View {
                             title: "50–80 years",
                             description: "USPSTF (2021), ACS (2023)"
                         )
-                        Divider().background(Color(white: 0.3))
+                        Divider().background(Color.subtleDivider)
                         DetailItem(
                             title: "50–77 years",
                             description: "CMS (2022)"
                         )
-                        Divider().background(Color(white: 0.3))
+                        Divider().background(Color.subtleDivider)
                         DetailItem(
                             title: "≥ 50 years (no upper age limit)",
                             description: "NCCN v1.2025"
@@ -397,7 +390,7 @@ struct LungRADSEligibilityDetailView: View {
                             title: "≥ 20 pack-years",
                             description: "USPSTF (2021), CMS (2022), ACS (2023), NCCN v1.2025"
                         )
-                        Divider().background(Color(white: 0.3))
+                        Divider().background(Color.subtleDivider)
                         DetailItem(
                             title: "≥ 20 years of smoking",
                             description: "NCCN v1.2025 – captures additional high-risk individuals"
@@ -412,7 +405,7 @@ struct LungRADSEligibilityDetailView: View {
                             title: "Current smoker or quit ≤ 15 years",
                             description: "USPSTF (2021), CMS (2022)"
                         )
-                        Divider().background(Color(white: 0.3))
+                        Divider().background(Color.subtleDivider)
                         DetailItem(
                             title: "None (quit time does not matter)",
                             description: "ACS (2023), NCCN v1.2025"
@@ -424,7 +417,7 @@ struct LungRADSEligibilityDetailView: View {
             }
             .padding(.top, 16)
         }
-        .background(Color.black)
+        .background(AppBackdrop())
         .navigationTitle("Screening Eligibility")
         .navigationBarTitleDisplayMode(.inline)
     }
@@ -440,12 +433,12 @@ struct LungRADSMeasuringNodulesDetailView: View {
                             title: "Mean Diameter",
                             description: "Average of long and short axis measurements on the same axial image."
                         )
-                        Divider().background(Color(white: 0.3))
+                        Divider().background(Color.subtleDivider)
                         DetailItem(
                             title: "Measure to 0.1 mm",
                             description: "Report measurements to one decimal place for precision."
                         )
-                        Divider().background(Color(white: 0.3))
+                        Divider().background(Color.subtleDivider)
                         DetailItem(
                             title: "Use Lung Windows",
                             description: "Measure nodules using lung window settings."
@@ -457,7 +450,7 @@ struct LungRADSMeasuringNodulesDetailView: View {
             }
             .padding(.top, 16)
         }
-        .background(Color.black)
+        .background(AppBackdrop())
         .navigationTitle("Measuring Nodules")
         .navigationBarTitleDisplayMode(.inline)
     }
@@ -490,7 +483,7 @@ struct LungRADSJuxtapleuralNodulesDetailView: View {
                         }
                         .padding()
                         
-                        Divider().background(Color(white: 0.3))
+                        Divider().background(Color.subtleDivider)
                         
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Features & Classification")
@@ -515,7 +508,7 @@ struct LungRADSJuxtapleuralNodulesDetailView: View {
             }
             .padding(.top, 16)
         }
-        .background(Color.black)
+        .background(AppBackdrop())
         .navigationTitle("Juxtapleural Nodules")
         .navigationBarTitleDisplayMode(.inline)
     }
@@ -531,12 +524,12 @@ struct LungRADSNoduleDensityDetailView: View {
                             title: "Solid",
                             description: "Completely obscures the lung parenchyma."
                         )
-                        Divider().background(Color(white: 0.3))
+                        Divider().background(Color.subtleDivider)
                         DetailItem(
                             title: "Part-Solid",
                             description: "Contains both solid and ground-glass components."
                         )
-                        Divider().background(Color(white: 0.3))
+                        Divider().background(Color.subtleDivider)
                         DetailItem(
                             title: "Non-Solid (Ground-Glass)",
                             description: "Hazy increased attenuation that does not obscure underlying structures."
@@ -548,7 +541,7 @@ struct LungRADSNoduleDensityDetailView: View {
             }
             .padding(.top, 16)
         }
-        .background(Color.black)
+        .background(AppBackdrop())
         .navigationTitle("Nodule Density / Types")
         .navigationBarTitleDisplayMode(.inline)
     }
@@ -573,22 +566,22 @@ struct LungRADSSteppedManagementDetailView: View {
                             title: "All Categories → Follow-up Timing",
                             description: "Follow-up timing dictated by the Lung-RADS category is from the date of the exam being interpreted."
                         )
-                        Divider().background(Color(white: 0.3))
+                        Divider().background(Color.subtleDivider)
                         DetailItem(
                             title: "Lung-RADS 3 → Stable/Decreased on 6-Month Follow-up CT",
                             description: "Reclassify to Lung-RADS 2; schedule LDCT 12 months from this exam."
                         )
-                        Divider().background(Color(white: 0.3))
+                        Divider().background(Color.subtleDivider)
                         DetailItem(
                             title: "Lung-RADS 4A → Stable/Decreased on 3-Month Follow-up CT",
                             description: "Reclassify to Lung-RADS 3; schedule LDCT 6 months from this exam.\n\nIf still stable/decreased at that 6 month scan, reclassify to Lung-RADS 2; schedule LDCT 12 months from the 6 month follow-up."
                         )
-                        Divider().background(Color(white: 0.3))
+                        Divider().background(Color.subtleDivider)
                         DetailItem(
                             title: "Lung-RADS 3 or 4A → Resolved on Follow-up CT",
                             description: "No stepped management; reclassify based on most worrisome nodule and follow-up from this exam."
                         )
-                        Divider().background(Color(white: 0.3))
+                        Divider().background(Color.subtleDivider)
                         DetailItem(
                             title: "Lung-RADS 4B → Benign After Workup or Resolved on Follow-up CT",
                             description: "No stepped management; reclassify based on most worrisome nodule and follow-up from this exam."
@@ -600,7 +593,7 @@ struct LungRADSSteppedManagementDetailView: View {
             }
             .padding(.top, 16)
         }
-        .background(Color.black)
+        .background(AppBackdrop())
         .navigationTitle("Stepped Management")
         .navigationBarTitleDisplayMode(.inline)
     }
@@ -616,7 +609,7 @@ struct LungRADSIntervalDiagnosticCTDetailView: View {
                             title: "When to Consider",
                             description: "Consider interval diagnostic chest CT when additional imaging or clinical evaluation is needed before the next scheduled LDCT."
                         )
-                        Divider().background(Color(white: 0.3))
+                        Divider().background(Color.subtleDivider)
                         DetailItem(
                             title: "Purpose",
                             description: "Helps clarify uncertain findings, evaluate symptoms, or follow up on specific concerns between regular screening intervals."
@@ -628,7 +621,7 @@ struct LungRADSIntervalDiagnosticCTDetailView: View {
             }
             .padding(.top, 16)
         }
-        .background(Color.black)
+        .background(AppBackdrop())
         .navigationTitle("Interval Diagnostic Chest CT")
         .navigationBarTitleDisplayMode(.inline)
     }
@@ -644,12 +637,12 @@ struct LungRADSInflammatoryFindingsDetailView: View {
                             title: "Recognition",
                             description: "Findings suggestive of an inflammatory or infectious process should be recognized and documented."
                         )
-                        Divider().background(Color(white: 0.3))
+                        Divider().background(Color.subtleDivider)
                         DetailItem(
                             title: "Short-Interval Follow-up",
                             description: "Short-interval follow-up may be appropriate to document resolution."
                         )
-                        Divider().background(Color(white: 0.3))
+                        Divider().background(Color.subtleDivider)
                         DetailItem(
                             title: "Category Assignment",
                             description: "Category should be assigned based on the appearance at the time of interpretation."
@@ -661,7 +654,7 @@ struct LungRADSInflammatoryFindingsDetailView: View {
             }
             .padding(.top, 16)
         }
-        .background(Color.black)
+        .background(AppBackdrop())
         .navigationTitle("Inflammatory/Infectious Findings")
         .navigationBarTitleDisplayMode(.inline)
     }
@@ -684,7 +677,7 @@ struct LungRADSSModifierDetailView: View {
             }
             .padding(.top, 16)
         }
-        .background(Color.black)
+        .background(AppBackdrop())
         .navigationTitle("S Modifier")
         .navigationBarTitleDisplayMode(.inline)
     }
@@ -695,18 +688,13 @@ struct LungRADSSModifierDetailView: View {
 struct DetailSection<Content: View>: View {
     let title: String
     @ViewBuilder let content: () -> Content
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(title)
-                .font(.caption)
-                .fontWeight(.semibold)
-                .foregroundColor(.gray)
-                .padding(.horizontal)
-            
+            SectionLabel(title: title)
+
             content()
-                .background(Color(white: 0.15))
-                .cornerRadius(12)
+                .cardStyle(cornerRadius: 12)
                 .padding(.horizontal)
         }
     }
@@ -715,7 +703,7 @@ struct DetailSection<Content: View>: View {
 struct DetailItem: View {
     let title: String
     let description: String
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(title)
@@ -723,7 +711,7 @@ struct DetailItem: View {
                 .foregroundColor(.white)
             Text(description)
                 .font(.subheadline)
-                .foregroundColor(.gray)
+                .foregroundColor(.white.opacity(0.55))
         }
         .padding()
     }
@@ -738,9 +726,14 @@ struct ReferenceButton: View {
 
     var body: some View {
         Button(action: { selectedReference = reference }) {
-            Text("Reference")
+            Label("Reference", systemImage: "doc.text")
+                .font(.subheadline.weight(.semibold))
                 .foregroundColor(accentColor)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 10)
+                .background(accentColor.opacity(0.14), in: Capsule())
         }
+        .buttonStyle(.plain)
         .frame(maxWidth: .infinity)
         .padding(.top, topPadding)
         .padding(.bottom, bottomPadding)

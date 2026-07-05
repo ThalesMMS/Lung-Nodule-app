@@ -23,10 +23,10 @@ struct PDFViewerSheet: View {
                             .foregroundColor(.gray)
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .background(Color.black)
+                    .background(AppBackdrop())
                 }
             }
-            .background(Color.black)
+            .background(AppBackdrop())
             .navigationTitle(reference.displayTitle)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

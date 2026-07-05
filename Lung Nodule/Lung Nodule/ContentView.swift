@@ -16,8 +16,8 @@ enum CalculatorType: String, CaseIterable, Identifiable {
     
     var color: Color {
         switch self {
-        case .fleischner: return Color.green
-        case .lungRADS: return Color.blue
+        case .fleischner: return .fleischnerAccent
+        case .lungRADS: return .lungRADSAccent
         }
     }
 }
@@ -28,127 +28,32 @@ struct ContentView: View {
     @State private var brockForm = BrockFormState()
     @State private var brockHandoffError: String?
     @State private var selectedReference: ReferenceType?
-    
-    // Custom Color for Segmented Control Logic
-    init() {
-        UISegmentedControl.appearance().selectedSegmentTintColor = UIColor.darkGray // Fallback
-        UISegmentedControl.appearance().setTitleTextAttributes([.foregroundColor: UIColor.white], for: .selected)
-        UISegmentedControl.appearance().setTitleTextAttributes([.foregroundColor: UIColor.lightGray], for: .normal)
-    }
+    @Namespace private var segmentAnimation
 
     var body: some View {
         NavigationStack {
             ZStack {
-                Color.black.edgesIgnoringSafeArea(.all) // Dark background main
-                
+                AppBackdrop()
+
                 VStack(spacing: 0) {
                     // Top Toolbar
-                    HStack {
-                        Button(action: { startMode = .info }) {
-                            Image(systemName: "info.circle")
-                                .font(.system(size: 22)) // Slightly smaller refined size
-                                .foregroundColor(startMode == .info ? .white : .gray)
-                        }
-                        .padding(.leading, 16)
-                        
-                        Button(action: { startMode = .calculator }) {
-                            Image(systemName: "brain.head.profile")
-                                .font(.system(size: 22))
-                                .foregroundColor(startMode == .calculator ? .white : .gray)
-                        }
-                        .padding(.leading, 16)
-                        
-                        Button(action: { startMode = .risk }) {
-                            Image(systemName: "plusminus.circle")
-                                .font(.system(size: 22))
-                                .foregroundColor(startMode == .risk ? .white : .gray)
-                        }
-                        .padding(.leading, 16)
-                        
+                    HStack(spacing: 10) {
+                        topBarButton(systemName: "info.circle", mode: .info)
+                        topBarButton(systemName: "brain.head.profile", mode: .calculator)
+                        topBarButton(systemName: "plusminus.circle", mode: .risk)
+
                         Spacer()
-                        
-                        Button(action: { startMode = .menu }) {
-                           Image(systemName: "ellipsis.circle")
-                                .font(.system(size: 22))
-                                .foregroundColor(startMode == .menu ? .white : .gray)
-                        }
-                        .padding(.trailing, 16)
+
+                        topBarButton(systemName: "ellipsis", mode: .menu)
                     }
+                    .padding(.horizontal, 16)
                     .padding(.top, 12)
-                    .padding(.bottom, 12)
-                    
-                    // Custom Segmented Control
-                    VStack(spacing: 0) {
-                        // Background Container for Buttons
-                        ZStack {
-                            RoundedRectangle(cornerRadius: 8.91) // Exact corner radius approximation from typical iOS look
-                                .fill(Color(UIColor.darkGray)) // Background for the whole control or just buttons? 
-                                // Actually, screenshots (Button Calc) often show a segmented control look where the background is continuous.
-                                // Let's use a container background.
-                            
-                            HStack(spacing: 0) {
-                                // Fleischner Button - only changes calculator type, does NOT change mode
-                                Button(action: { selectedCalculator = .fleischner }) {
-                                    Text(CalculatorType.fleischner.rawValue)
-                                        .font(.subheadline)
-                                        .fontWeight(.semibold)
-                                        .foregroundColor(.white)
-                                        .frame(maxWidth: .infinity)
-                                        .padding(.vertical, 8)
-                                        .background(Color.clear)
-                                }
-                                
-                                // Lung-RADS Button - only changes calculator type, does NOT change mode
-                                Button(action: { selectedCalculator = .lungRADS }) {
-                                    Text(CalculatorType.lungRADS.rawValue)
-                                        .font(.subheadline)
-                                        .fontWeight(.semibold)
-                                        .foregroundColor(.white)
-                                        .frame(maxWidth: .infinity)
-                                        .padding(.vertical, 8)
-                                        .background(Color.clear)
-                                }
-                            }
-                        }
-                        .frame(height: 36) // Fixed height for control
-                        .padding(.horizontal, 16)
-                        
-                        // Indicators (Below the rounded container)
-                        HStack(spacing: 0) {
-                            // Fleischner Indicator
-                            if selectedCalculator == .fleischner {
-                                Rectangle()
-                                    .fill(Color(red: 0.2, green: 0.8, blue: 0.2)) // Brighter Green matching screenshot
-                                    .frame(height: 2)
-                                    .transition(.opacity)
-                            } else {
-                                Rectangle()
-                                    .fill(Color.clear)
-                                    .frame(height: 2)
-                            }
-                            
-                            // Lung-RADS Indicator
-                            if selectedCalculator == .lungRADS {
-                                Rectangle()
-                                    .fill(Color(red: 0.0, green: 0.478, blue: 1.0)) // System Blue
-                                    .frame(height: 2)
-                                    .transition(.opacity)
-                            } else {
-                                Rectangle()
-                                    .fill(Color.clear)
-                                    .frame(height: 2)
-                            }
-                        }
-                        .frame(height: 2)
-                        .padding(.horizontal, 16)
-                        .padding(.top, 0) // Flush with bottom of control? Or slightly overlapping? 
-                        // Screenshot IMG_0032 seems to show the line is part of the button "active state" bottom border.
-                        // Let's keep it just below for clarity or verify "Button Calc".
-                        // Assuming "Button Calc" shows the specific active underline style.
-                    }
-                    .padding(.bottom, 16)
-                    
-                    
+                    .padding(.bottom, 14)
+
+                    // Calculator Switcher
+                    calculatorSwitcher
+                        .padding(.bottom, 16)
+
                     // Main Content Area
                     ScrollView {
                         // Content matching logic... 
@@ -163,76 +68,79 @@ struct ContentView: View {
                         } else if startMode == .info {
                             // "Common Issues" List
                             VStack(alignment: .leading, spacing: 10) {
-                                Text("This application is a decision support tool for healthcare professionals and does not replace clinical judgment. Management should be based on the original guidelines (ACR/Fleischner).")
-                                    .font(.subheadline)
-                                    .foregroundColor(.gray)
-                                    .multilineTextAlignment(.leading)
-                                    .padding()
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                    .background(Color(white: 0.15))
-                                    .cornerRadius(12)
-                                    .padding(.horizontal)
+                                HStack(alignment: .top, spacing: 10) {
+                                    Image(systemName: "info.circle.fill")
+                                        .foregroundColor(.white.opacity(0.5))
+                                    Text("This application is a decision support tool for healthcare professionals and does not replace clinical judgment. Management should be based on the original guidelines (ACR/Fleischner).")
+                                        .font(.subheadline)
+                                        .foregroundColor(.white.opacity(0.65))
+                                        .multilineTextAlignment(.leading)
+                                }
+                                .padding()
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .cardStyle()
+                                .padding(.horizontal)
 
                                 Text("\(selectedCalculator == .fleischner ? "Fleischner" : "Lung-RADS") Common Issues")
-                                    .font(.title2).bold()
+                                    .font(.title2.weight(.bold))
                                     .foregroundColor(.white)
                                     .padding()
-                                
+
                                 VStack(spacing: 12) {
                                     if selectedCalculator == .fleischner {
                                         // Fleischner Common Issues - 7 items matching reference
                                         Group {
                                             NavigationLink(destination: FleischnerEligibilityDetailView()) {
-                                                InfoRow(icon: "checkmark.seal", text: "Eligibility", accentColor: .green)
+                                                InfoRow(icon: "checkmark.seal", text: "Eligibility", accentColor: .fleischnerAccent)
                                             }
                                             NavigationLink(destination: FleischnerMeasuringNodulesDetailView()) {
-                                                InfoRow(icon: "ruler", text: "Measuring Nodules", accentColor: .green)
+                                                InfoRow(icon: "ruler", text: "Measuring Nodules", accentColor: .fleischnerAccent)
                                             }
                                             NavigationLink(destination: FleischnerPerifissuralNodulesDetailView()) {
-                                                InfoRow(icon: "circle.fill", text: "Perifissural Nodules", accentColor: .green)
+                                                InfoRow(icon: "circle.fill", text: "Perifissural Nodules", accentColor: .fleischnerAccent)
                                             }
                                             NavigationLink(destination: FleischnerNoduleDensityDetailView()) {
-                                                InfoRow(icon: "circle.bottomhalf.filled", text: "Nodule Density / Types", accentColor: .green)
+                                                InfoRow(icon: "circle.bottomhalf.filled", text: "Nodule Density / Types", accentColor: .fleischnerAccent)
                                             }
                                             NavigationLink(destination: FleischnerCalcificationPatternsDetailView()) {
-                                                InfoRow(icon: "atom", text: "Nodule Calcification Patterns", accentColor: .green)
+                                                InfoRow(icon: "atom", text: "Nodule Calcification Patterns", accentColor: .fleischnerAccent)
                                             }
                                             NavigationLink(destination: FleischnerApicalScarringDetailView()) {
-                                                InfoRow(icon: "arrow.up.right", text: "Apical Scarring", accentColor: .green)
+                                                InfoRow(icon: "arrow.up.right", text: "Apical Scarring", accentColor: .fleischnerAccent)
                                             }
                                             NavigationLink(destination: FleischnerNeckAbdomenCTsDetailView()) {
-                                                InfoRow(icon: "person.crop.rectangle", text: "Neck / Abdomen CTs", accentColor: .green)
+                                                InfoRow(icon: "person.crop.rectangle", text: "Neck / Abdomen CTs", accentColor: .fleischnerAccent)
                                             }
                                         }
                                     } else {
                                         // Lung-RADS Common Issues - 9 items matching reference
                                         Group {
                                             NavigationLink(destination: LungRADSEligibilityDetailView()) {
-                                                InfoRow(icon: "checkmark.seal", text: "Eligibility", accentColor: .blue)
+                                                InfoRow(icon: "checkmark.seal", text: "Eligibility", accentColor: .lungRADSAccent)
                                             }
                                             NavigationLink(destination: LungRADSMeasuringNodulesDetailView()) {
-                                                InfoRow(icon: "ruler", text: "Measuring Nodules", accentColor: .blue)
+                                                InfoRow(icon: "ruler", text: "Measuring Nodules", accentColor: .lungRADSAccent)
                                             }
                                             NavigationLink(destination: LungRADSJuxtapleuralNodulesDetailView()) {
-                                                InfoRow(icon: "circle.fill", text: "Juxtapleural Nodules", accentColor: .blue)
+                                                InfoRow(icon: "circle.fill", text: "Juxtapleural Nodules", accentColor: .lungRADSAccent)
                                             }
                                             NavigationLink(destination: LungRADSNoduleDensityDetailView()) {
-                                                InfoRow(icon: "circle.bottomhalf.filled", text: "Nodule Density / Types", accentColor: .blue)
+                                                InfoRow(icon: "circle.bottomhalf.filled", text: "Nodule Density / Types", accentColor: .lungRADSAccent)
                                             }
                                             NavigationLink(destination: LungRADSCalcificationPatternsDetailView()) {
-                                                InfoRow(icon: "atom", text: "Nodule Calcification Patterns", accentColor: .blue)
+                                                InfoRow(icon: "atom", text: "Nodule Calcification Patterns", accentColor: .lungRADSAccent)
                                             }
                                             NavigationLink(destination: LungRADSSteppedManagementDetailView()) {
-                                                InfoRow(icon: "slider.horizontal.3", text: "Stepped Management", accentColor: .blue)
+                                                InfoRow(icon: "slider.horizontal.3", text: "Stepped Management", accentColor: .lungRADSAccent)
                                             }
                                             NavigationLink(destination: LungRADSIntervalDiagnosticCTDetailView()) {
-                                                InfoRow(icon: "clock.arrow.circlepath", text: "Interval Diagnostic Chest CT", accentColor: .blue)
+                                                InfoRow(icon: "clock.arrow.circlepath", text: "Interval Diagnostic Chest CT", accentColor: .lungRADSAccent)
                                             }
                                             NavigationLink(destination: LungRADSInflammatoryFindingsDetailView()) {
-                                                InfoRow(icon: "allergens", text: "Inflammatory/Infectious Findings", accentColor: .blue)
+                                                InfoRow(icon: "allergens", text: "Inflammatory/Infectious Findings", accentColor: .lungRADSAccent)
                                             }
                                             NavigationLink(destination: LungRADSSModifierDetailView()) {
-                                                InfoRow(icon: "exclamationmark.circle", text: "S Modifier", accentColor: .blue)
+                                                InfoRow(icon: "exclamationmark.circle", text: "S Modifier", accentColor: .lungRADSAccent)
                                             }
                                         }
                                     }
@@ -244,55 +152,43 @@ struct ContentView: View {
                             // References Screen - matching Button Menu.PNG
                             VStack(alignment: .leading, spacing: 24) {
                                 Text("References")
-                                    .font(.largeTitle).bold()
+                                    .font(.largeTitle.weight(.bold))
                                     .foregroundColor(.white)
                                     .frame(maxWidth: .infinity)
                                     .padding(.top, 40)
-                                
+
                                 // Fleischner Society Guidelines Section
                                 VStack(alignment: .leading, spacing: 0) {
-                                    Text("FLEISCHNER SOCIETY GUIDELINES")
-                                        .font(.caption)
-                                        .fontWeight(.semibold)
-                                        .foregroundColor(.gray)
-                                        .padding(.horizontal)
-                                        .padding(.bottom, 8)
-                                    
+                                    SectionLabel(title: "FLEISCHNER SOCIETY GUIDELINES")
+
                                     VStack(spacing: 0) {
                                         ReferenceLink(text: "Fleischner Society Guidelines Reference", reference: .fleischnerGuideline, onTap: presentReference)
-                                        Divider().background(Color(white: 0.3))
+                                        Divider().background(Color.subtleDivider)
                                         ReferenceLink(text: "Recommendations for Measuring Pulmonary Nodules at CT: A Statement from the Fleischner Society", reference: .fleischnerGuideline, onTap: presentReference)
                                     }
-                                    .background(Color(white: 0.15))
-                                    .cornerRadius(12)
+                                    .cardStyle()
                                     .padding(.horizontal)
                                 }
-                                
+
                                 // ACR Lung-RADS Section
                                 VStack(alignment: .leading, spacing: 0) {
-                                    Text("ACR LUNG-RADS V2022")
-                                        .font(.caption)
-                                        .fontWeight(.semibold)
-                                        .foregroundColor(.gray)
-                                        .padding(.horizontal)
-                                        .padding(.bottom, 8)
-                                    
+                                    SectionLabel(title: "ACR LUNG-RADS V2022")
+
                                     VStack(spacing: 0) {
                                         ReferenceLink(text: "ACR Lung-RADS v2022 Reference", reference: .lungRADSGuideline, onTap: presentReference)
-                                        Divider().background(Color(white: 0.3))
+                                        Divider().background(Color.subtleDivider)
                                         ReferenceLink(text: "ACR Lung-RADS v2022 Summary of Changes and Updates", reference: .lungRADSGuideline, onTap: presentReference)
-                                        Divider().background(Color(white: 0.3))
+                                        Divider().background(Color.subtleDivider)
                                         ReferenceLink(text: "ACR Lung-RADS v2022: Assessment Categories and Management Recommendations", reference: .lungRADSTable, onTap: presentReference)
-                                        Divider().background(Color(white: 0.3))
+                                        Divider().background(Color.subtleDivider)
                                         ReferenceLink(text: "ACR Lung Cancer Screening CT Incidental Findings Quick Reference Guide", reference: .lungRADSGuideline, onTap: presentReference)
-                                        Divider().background(Color(white: 0.3))
+                                        Divider().background(Color.subtleDivider)
                                         ReferenceLink(text: "ACR–STR Practice Parameter for the Performance and Reporting of Lung Cancer Screening Thoracic Computed Tomography (CT)", reference: .lungRADSGuideline, onTap: presentReference)
                                     }
-                                    .background(Color(white: 0.15))
-                                    .cornerRadius(12)
+                                    .cardStyle()
                                     .padding(.horizontal)
                                 }
-                                
+
                                 Spacer()
                             }
                             .padding(.bottom, 40)
@@ -357,27 +253,77 @@ struct ContentView: View {
             }
         )
     }
+
+    private func topBarButton(systemName: String, mode: AppMode) -> some View {
+        let isSelected = startMode == mode
+        return Button {
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) {
+                startMode = mode
+            }
+        } label: {
+            Image(systemName: systemName)
+                .font(.system(size: 17, weight: .semibold))
+                .foregroundColor(isSelected ? .black : .white.opacity(0.7))
+                .frame(width: 38, height: 38)
+                .background {
+                    Circle()
+                        .fill(isSelected ? selectedCalculator.color : Color.white.opacity(0.07))
+                }
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var calculatorSwitcher: some View {
+        HStack(spacing: 4) {
+            ForEach(CalculatorType.allCases) { type in
+                Button {
+                    withAnimation(.spring(response: 0.32, dampingFraction: 0.85)) {
+                        selectedCalculator = type
+                    }
+                } label: {
+                    Text(type.rawValue)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundColor(selectedCalculator == type ? .white : .white.opacity(0.5))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 9)
+                        .background {
+                            if selectedCalculator == type {
+                                Capsule()
+                                    .fill(type.color)
+                                    .matchedGeometryEffect(id: "segment", in: segmentAnimation)
+                            }
+                        }
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(4)
+        .background(Capsule().fill(Color.white.opacity(0.07)))
+        .padding(.horizontal, 16)
+    }
 }
 
 struct InfoRow: View {
     let icon: String
     let text: String
-    var accentColor: Color = .green
-    
+    var accentColor: Color = .fleischnerAccent
+
     var body: some View {
-        HStack {
+        HStack(spacing: 12) {
             Image(systemName: icon)
+                .font(.system(size: 15, weight: .semibold))
                 .foregroundColor(accentColor)
-                .frame(width: 30)
+                .frame(width: 32, height: 32)
+                .background(accentColor.opacity(0.14), in: Circle())
             Text(text)
                 .foregroundColor(.white)
             Spacer()
             Image(systemName: "chevron.right")
-                .foregroundColor(.gray)
+                .font(.caption.weight(.semibold))
+                .foregroundColor(.white.opacity(0.3))
         }
         .padding()
-        .background(Color(uiColor: .secondarySystemBackground))
-        .cornerRadius(10)
+        .cardStyle(cornerRadius: 12)
     }
 }
 
@@ -385,13 +331,20 @@ struct ReferenceLink: View {
     let text: String
     let reference: ReferenceType
     let onTap: (ReferenceType) -> Void
-    
+
     var body: some View {
         Button(action: { onTap(reference) }) {
-            Text(text)
-                .foregroundColor(Color(red: 0.0, green: 0.478, blue: 1.0))
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding()
+            HStack(alignment: .top, spacing: 10) {
+                Image(systemName: "doc.text")
+                    .foregroundColor(.lungRADSAccent)
+                    .font(.subheadline)
+                    .padding(.top, 2)
+                Text(text)
+                    .foregroundColor(.white.opacity(0.85))
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .padding()
         }
+        .buttonStyle(.plain)
     }
 }
