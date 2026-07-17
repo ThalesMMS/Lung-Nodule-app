@@ -1,55 +1,48 @@
 import SwiftUI
 
+struct SModifierFindings {
+    var thyroidNodule = false
+    var fibroticILD = false
+    var bronchiectasis = false
+    var emphysema = false
+    var newPleuralDisease = false
+    var ascendingAorta = false
+    var pericardialEffusion = false
+    var aorticValveCalcification = false
+    var coronaryCalcifications = false
+    var pulmonaryArtery = false
+    var lymphNodes = false
+    var mediastinalMass = false
+    var hiatalHernia = false
+    var esophagealWallThickening = false
+    var osteopenia = false
+    var osteoporosis = false
+    var breastNodule = false
+    var liverLesion = false
+    var fattyLiver = false
+    var adrenalLesion = false
+    var kidneyLesion = false
+    var pancreasCyst = false
+    var otherFindings = false
+
+    var hasAny: Bool {
+        thyroidNodule || fibroticILD || bronchiectasis || emphysema || newPleuralDisease ||
+        ascendingAorta || pericardialEffusion || aorticValveCalcification ||
+        coronaryCalcifications || pulmonaryArtery || lymphNodes || mediastinalMass ||
+        hiatalHernia || esophagealWallThickening || osteopenia || osteoporosis ||
+        breastNodule || liverLesion || fattyLiver || adrenalLesion || kidneyLesion ||
+        pancreasCyst || otherFindings
+    }
+
+    mutating func reset() {
+        self = SModifierFindings()
+    }
+}
 struct SModifierConsiderationsView: View {
     @Environment(\.dismiss) private var dismiss
     @Binding var hasSModifierFindings: Bool
     
-    // Thyroid
-    @State private var thyroidNodule = false
-    
-    // Lung/Pleura
-    @State private var fibroticILD = false
-    @State private var bronchiectasis = false
-    @State private var emphysema = false
-    @State private var newPleuralDisease = false
-    
-    // Cardiovascular
-    @State private var ascendingAorta = false
-    @State private var pericardialEffusion = false
-    @State private var aorticValveCalcification = false
-    @State private var coronaryCalcifications = false
-    @State private var pulmonaryArtery = false
-    
-    // Mediastinum
-    @State private var lymphNodes = false
-    @State private var mediastinalMass = false
-    
-    // Esophagus
-    @State private var hiatalHernia = false
-    @State private var esophagealWallThickening = false
-    
-    // Musculoskeletal
-    @State private var osteopenia = false
-    @State private var osteoporosis = false
-    
-    // Breast
-    @State private var breastNodule = false
-    
-    // Liver
-    @State private var liverLesion = false
-    @State private var fattyLiver = false
-    
-    // Adrenal Gland
-    @State private var adrenalLesion = false
-    
-    // Kidney
-    @State private var kidneyLesion = false
-    
-    // Pancreas
-    @State private var pancreasCyst = false
-    
-    // Other
-    @State private var otherFindings = false
+    @State private var findings = SModifierFindings()
     
     private let blueAccent = Color.lungRADSAccent
     
@@ -63,7 +56,7 @@ struct SModifierConsiderationsView: View {
                         SModifierToggleItem(
                             title: "Nodule ≥ 15 mm or with suspicious features",
                             recommendation: "Recommend Thyroid Ultrasound and clinical evaluation.",
-                            isOn: $thyroidNodule
+                            isOn: $findings.thyroidNodule
                         )
                     }
                     
@@ -72,7 +65,7 @@ struct SModifierConsiderationsView: View {
                         SModifierToggleItem(
                             title: "Fibrotic interstitial lung disease (ILD)",
                             recommendation: "Recommend pulmonary consultation.",
-                            isOn: $fibroticILD
+                            isOn: $findings.fibroticILD
                         )
                         
                         Divider().background(Color.subtleDivider)
@@ -80,7 +73,7 @@ struct SModifierConsiderationsView: View {
                         SModifierToggleItem(
                             title: "Bronchiectasis / Ground-glass opacity / Cystic lung disease / Diffuse nodular disease",
                             recommendation: "Recommend PCP evaluation; consider pulmonary consultation.",
-                            isOn: $bronchiectasis
+                            isOn: $findings.bronchiectasis
                         )
                         
                         Divider().background(Color.subtleDivider)
@@ -88,7 +81,7 @@ struct SModifierConsiderationsView: View {
                         SModifierToggleItem(
                             title: "Emphysema/Bronchial wall thickening (Expected findings)",
                             recommendation: "Consider PCP evaluation; may benefit from pulmonary consultation.",
-                            isOn: $emphysema
+                            isOn: $findings.emphysema
                         )
                         
                         Divider().background(Color.subtleDivider)
@@ -96,7 +89,7 @@ struct SModifierConsiderationsView: View {
                         SModifierToggleItem(
                             title: "New pleural disease – effusion, thickening, mass",
                             recommendation: "Recommend PCP evaluation; consider pulmonary consultation.",
-                            isOn: $newPleuralDisease
+                            isOn: $findings.newPleuralDisease
                         )
                     }
                     
@@ -105,7 +98,7 @@ struct SModifierConsiderationsView: View {
                         SModifierToggleItem(
                             title: "Ascending aorta ≥ 42 mm",
                             recommendation: "Recommend PCP surveillance or cardiology consult for aneurysm surveillance.",
-                            isOn: $ascendingAorta
+                            isOn: $findings.ascendingAorta
                         )
                         
                         Divider().background(Color.subtleDivider)
@@ -113,7 +106,7 @@ struct SModifierConsiderationsView: View {
                         SModifierToggleItem(
                             title: "Moderate or large pericardial effusion",
                             recommendation: "Discuss findings with PCP.",
-                            isOn: $pericardialEffusion
+                            isOn: $findings.pericardialEffusion
                         )
                         
                         Divider().background(Color.subtleDivider)
@@ -121,7 +114,7 @@ struct SModifierConsiderationsView: View {
                         SModifierToggleItem(
                             title: "Other abnormalities (e.g., moderate or greater aortic valve calcification)",
                             recommendation: "Recommend PCP evaluation.",
-                            isOn: $aorticValveCalcification
+                            isOn: $findings.aorticValveCalcification
                         )
                         
                         Divider().background(Color.subtleDivider)
@@ -129,7 +122,7 @@ struct SModifierConsiderationsView: View {
                         SModifierToggleItem(
                             title: "Coronary artery calcifications present",
                             recommendation: "Recommend PCP evaluation for ASCVD risk assessment.",
-                            isOn: $coronaryCalcifications
+                            isOn: $findings.coronaryCalcifications
                         )
                         
                         Divider().background(Color.subtleDivider)
@@ -137,7 +130,7 @@ struct SModifierConsiderationsView: View {
                         SModifierToggleItem(
                             title: "Main pulmonary artery measurement ≥ 31 mm",
                             recommendation: "Recommend PCP evaluation; consider cardiology or pulmonary consult.",
-                            isOn: $pulmonaryArtery
+                            isOn: $findings.pulmonaryArtery
                         )
                     }
                     
@@ -146,7 +139,7 @@ struct SModifierConsiderationsView: View {
                         SModifierToggleItem(
                             title: "Lymph nodes ≥ 15 mm (short axis measurement) & no explainable cause",
                             recommendation: "Recommend PCP evaluation; consider pulmonary consultation. Consider follow-up contrast-enhanced Chest CT in 3–6 months.",
-                            isOn: $lymphNodes
+                            isOn: $findings.lymphNodes
                         )
                         
                         Divider().background(Color.subtleDivider)
@@ -154,7 +147,7 @@ struct SModifierConsiderationsView: View {
                         SModifierToggleItem(
                             title: "Mass (soft tissue or mixed density)",
                             recommendation: "Recommend contrast-enhanced Chest MRI or CT.",
-                            isOn: $mediastinalMass
+                            isOn: $findings.mediastinalMass
                         )
                     }
                     
@@ -163,7 +156,7 @@ struct SModifierConsiderationsView: View {
                         SModifierToggleItem(
                             title: "Large hiatal hernia or dilated esophagus",
                             recommendation: "Recommend PCP evaluation.",
-                            isOn: $hiatalHernia
+                            isOn: $findings.hiatalHernia
                         )
                         
                         Divider().background(Color.subtleDivider)
@@ -171,7 +164,7 @@ struct SModifierConsiderationsView: View {
                         SModifierToggleItem(
                             title: "Focal wall thickening or mass",
                             recommendation: "Recommend PCP evaluation; consider gastroenterology consult.",
-                            isOn: $esophagealWallThickening
+                            isOn: $findings.esophagealWallThickening
                         )
                     }
                     
@@ -180,7 +173,7 @@ struct SModifierConsiderationsView: View {
                         SModifierToggleItem(
                             title: "100 – 130 HU at L1 (Osteopenia)",
                             recommendation: "Consider PCP evaluation.",
-                            isOn: $osteopenia
+                            isOn: $findings.osteopenia
                         )
                         
                         Divider().background(Color.subtleDivider)
@@ -188,7 +181,7 @@ struct SModifierConsiderationsView: View {
                         SModifierToggleItem(
                             title: "< 100 HU at L1 (Osteoporosis)",
                             recommendation: "Recommend PCP evaluation and consider DEXA scan.",
-                            isOn: $osteoporosis
+                            isOn: $findings.osteoporosis
                         )
                     }
                     
@@ -197,13 +190,13 @@ struct SModifierConsiderationsView: View {
                         SModifierToggleItem(
                             title: "Any nodule/mass or asymmetric density",
                             recommendation: "Recommend Diagnostic Mammogram +/- Breast Ultrasound.",
-                            isOn: $breastNodule
+                            isOn: $findings.breastNodule
                         )
                     }
                     
                     // LIVER Section
                     SModifierSection(title: "LIVER", icon: "drop") {
-                        SModifierComplexItem(
+                        SModifierToggleItem(
                             title: "Any liver lesion that:",
                             bullets: [
                                 "Does NOT clearly appear benign (examples of benign characteristics include uniformly low attenuation ≤20 HU and sharp, well-defined margins)",
@@ -211,7 +204,7 @@ struct SModifierConsiderationsView: View {
                                 "Is <1 cm in a patient who is considered high-risk (e.g., cirrhosis, hepatitis, nonalcoholic steatohepatitis, alcoholism, other hepatic risk factors)"
                             ],
                             recommendation: "Recommend MRI (preferred) or CT of the liver without and with IV contrast.",
-                            isOn: $liverLesion
+                            isOn: $findings.liverLesion
                         )
                         
                         Divider().background(Color.subtleDivider)
@@ -219,13 +212,13 @@ struct SModifierConsiderationsView: View {
                         SModifierToggleItem(
                             title: "Fatty liver/hepatic steatosis or cirrhosis",
                             recommendation: "Recommend PCP evaluation.",
-                            isOn: $fattyLiver
+                            isOn: $findings.fattyLiver
                         )
                     }
                     
                     // ADRENAL GLAND Section
                     SModifierSection(title: "ADRENAL GLAND", icon: "triangle") {
-                        SModifierComplexItem(
+                        SModifierToggleItem(
                             title: "Any adrenal lesion that:",
                             bullets: [
                                 "Measures ≥1 cm in size and has an attenuation >10 HU",
@@ -233,13 +226,13 @@ struct SModifierConsiderationsView: View {
                                 "Demonstrates worrisome changes, such as:\n  ▸ Enlargement over time\n  ▸ Other suspicious visual features"
                             ],
                             recommendation: "Recommend CT or MRI of the adrenal glands without and with IV contrast.",
-                            isOn: $adrenalLesion
+                            isOn: $findings.adrenalLesion
                         )
                     }
                     
                     // KIDNEY Section
                     SModifierSection(title: "KIDNEY", icon: "leaf") {
-                        SModifierComplexItem(
+                        SModifierToggleItem(
                             title: "Any kidney lesion that:",
                             bullets: [
                                 "Does NOT clearly appear benign (examples of benign characteristics include visible fat or uniform low attenuation ≤20 HU)",
@@ -248,7 +241,7 @@ struct SModifierConsiderationsView: View {
                                 "Displays suspicious changes, such as:\n  ▸ Shape changes\n  ▸ Attenuation between 21-69 HU\n  ▸ Thick or irregular walls\n  ▸ Nodules inside the lesion\n  ▸ Internal septa\n  ▸ Calcifications"
                             ],
                             recommendation: "Recommend MRI (preferred) or CT of the kidneys without and with IV contrast.",
-                            isOn: $kidneyLesion
+                            isOn: $findings.kidneyLesion
                         )
                     }
                     
@@ -257,7 +250,7 @@ struct SModifierConsiderationsView: View {
                         SModifierToggleItem(
                             title: "Cyst/mass",
                             recommendation: "Recommend Contrast-Enhanced Abdomen CT or MRI.",
-                            isOn: $pancreasCyst
+                            isOn: $findings.pancreasCyst
                         )
                     }
                     
@@ -266,7 +259,7 @@ struct SModifierConsiderationsView: View {
                         SModifierToggleItem(
                             title: "Other imaging finding(s) (not listed above) that require(s) an S modifier",
                             recommendation: nil,
-                            isOn: $otherFindings
+                            isOn: $findings.otherFindings
                         )
                     }
                     
@@ -300,167 +293,15 @@ struct SModifierConsiderationsView: View {
     }
     
     private func resetAll() {
-        thyroidNodule = false
-        fibroticILD = false
-        bronchiectasis = false
-        emphysema = false
-        newPleuralDisease = false
-        ascendingAorta = false
-        pericardialEffusion = false
-        aorticValveCalcification = false
-        coronaryCalcifications = false
-        pulmonaryArtery = false
-        lymphNodes = false
-        mediastinalMass = false
-        hiatalHernia = false
-        esophagealWallThickening = false
-        osteopenia = false
-        osteoporosis = false
-        breastNodule = false
-        liverLesion = false
-        fattyLiver = false
-        adrenalLesion = false
-        kidneyLesion = false
-        pancreasCyst = false
-        otherFindings = false
+        findings.reset()
         updateHasSModifierFindings()
     }
 
     private var hasAnyFindings: Bool {
-        thyroidNodule ||
-        fibroticILD ||
-        bronchiectasis ||
-        emphysema ||
-        newPleuralDisease ||
-        ascendingAorta ||
-        pericardialEffusion ||
-        aorticValveCalcification ||
-        coronaryCalcifications ||
-        pulmonaryArtery ||
-        lymphNodes ||
-        mediastinalMass ||
-        hiatalHernia ||
-        esophagealWallThickening ||
-        osteopenia ||
-        osteoporosis ||
-        breastNodule ||
-        liverLesion ||
-        fattyLiver ||
-        adrenalLesion ||
-        kidneyLesion ||
-        pancreasCyst ||
-        otherFindings
+        findings.hasAny
     }
 
     private func updateHasSModifierFindings() {
         hasSModifierFindings = hasAnyFindings
     }
-}
-
-// MARK: - Supporting Views
-
-struct SModifierSection<Content: View>: View {
-    let title: String
-    let icon: String
-    @ViewBuilder let content: () -> Content
-    
-    private let blueAccent = Color.lungRADSAccent
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            // Section Header
-            HStack(spacing: 12) {
-                Image(systemName: icon)
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundColor(blueAccent)
-                    .frame(width: 32, height: 32)
-                    .background(blueAccent.opacity(0.15), in: Circle())
-                Text(title)
-                    .font(.headline)
-                    .foregroundColor(.white)
-                Spacer(minLength: 0)
-            }
-            .padding()
-            .frame(maxWidth: .infinity, alignment: .leading)
-
-            Divider().background(Color.subtleDivider)
-
-            // Section Content
-            VStack(alignment: .leading, spacing: 0) {
-                content()
-            }
-        }
-        .cardStyle(cornerRadius: 12)
-        .padding(.horizontal)
-    }
-}
-
-struct SModifierToggleItem: View {
-    let title: String
-    let recommendation: String?
-    @Binding var isOn: Bool
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(title)
-                        .font(.subheadline)
-                        .foregroundColor(.white)
-                    if let recommendation = recommendation {
-                        Text(recommendation)
-                            .font(.caption)
-                            .foregroundColor(.gray)
-                    }
-                }
-                Spacer()
-                Toggle("", isOn: $isOn)
-                    .labelsHidden()
-            }
-        }
-        .padding()
-    }
-}
-
-struct SModifierComplexItem: View {
-    let title: String
-    let bullets: [String]
-    let recommendation: String
-    @Binding var isOn: Bool
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text(title)
-                        .font(.subheadline)
-                        .foregroundColor(.white)
-                    
-                    ForEach(bullets, id: \.self) { bullet in
-                        HStack(alignment: .top, spacing: 8) {
-                            Text("●")
-                                .font(.caption2)
-                                .foregroundColor(.gray)
-                            Text(bullet)
-                                .font(.caption)
-                                .foregroundColor(.gray)
-                        }
-                    }
-                    
-                    Text(recommendation)
-                        .font(.caption)
-                        .foregroundColor(.gray)
-                        .padding(.top, 4)
-                }
-                Spacer()
-                Toggle("", isOn: $isOn)
-                    .labelsHidden()
-            }
-        }
-        .padding()
-    }
-}
-
-#Preview {
-    SModifierConsiderationsView(hasSModifierFindings: .constant(false))
 }

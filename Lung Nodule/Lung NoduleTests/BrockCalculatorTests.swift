@@ -181,6 +181,42 @@ struct BrockCalculatorTests {
         #expect(emph.malignancyProbability > baseline.malignancyProbability)
     }
 
+    // MARK: - View Model
+
+    @Test func viewModelUsesTypedGenderAndMorphology() async throws {
+        let viewModel = BrockViewModel()
+        viewModel.form.age = "68"
+        viewModel.form.gender = .female
+        viewModel.form.noduleSize = "10"
+        viewModel.form.noduleMorphology = .partSolid
+        viewModel.form.noduleCount = "2"
+
+        let result = try #require(viewModel.result)
+        let expected = try #require(BrockCalculator.calculate(input: makeBrockInput(
+            age: 68,
+            isFemale: true,
+            noduleSizeMm: 10,
+            noduleType: .partSolid,
+            noduleCount: 2
+        )))
+
+        #expect(abs(result.malignancyProbability - expected.malignancyProbability) < 0.0001)
+    }
+
+    @Test func viewModelSurfacesDomainValidationAndRejectsUnparseableFields() async throws {
+        let viewModel = BrockViewModel()
+        viewModel.form.age = "17"
+        viewModel.form.noduleSize = "10"
+        viewModel.form.noduleCount = "1"
+
+        #expect(viewModel.result == nil)
+        #expect(viewModel.validationError == BrockValidationError.ageBelowMinimum.message)
+
+        viewModel.form.age = "not an age"
+        #expect(viewModel.result == nil)
+        #expect(viewModel.validationError == nil)
+    }
+
     // MARK: - Morphology Mapping
 
     @Test func lungRADSHandoffMorphologyMapping() async throws {

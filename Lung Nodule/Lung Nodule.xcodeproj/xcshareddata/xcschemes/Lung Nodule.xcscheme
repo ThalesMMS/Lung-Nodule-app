@@ -48,6 +48,17 @@
                ReferencedContainer = "container:Lung Nodule.xcodeproj">
             </BuildableReference>
          </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "126E91642F00112D00CCCD63"
+               BuildableName = "Lung NoduleUITests.xctest"
+               BlueprintName = "Lung NoduleUITests"
+               ReferencedContainer = "container:Lung Nodule.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
       </Testables>
    </TestAction>
    <LaunchAction

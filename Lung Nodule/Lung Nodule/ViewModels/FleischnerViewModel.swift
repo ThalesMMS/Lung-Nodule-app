@@ -45,51 +45,48 @@ class FleischnerViewModel: ObservableObject {
     }
 
     private func updateSizeMeasurement() {
-        guard let value = parseMeasurement(sizeText), value > 0 else {
+        guard let measurement = parseMeasurement(sizeText), measurement.value > 0 else {
             input.sizeMm = nil
             input.sizeCategory = .lessThanSix
             roundedSizeMm = nil
             return
         }
-        input.sizeMm = value
-        guard let rounded = roundToNearestMm(value) else { return }
-        roundedSizeMm = rounded
+        input.sizeMm = measurement.value
+        roundedSizeMm = measurement.rounded
         input = input.resolvingMeasurements()
     }
 
     private func updateSolidComponentMeasurement() {
-        guard let value = parseMeasurement(solidComponentText), value >= 0 else {
+        guard let measurement = parseMeasurement(solidComponentText), measurement.value >= 0 else {
             input.solidComponentMm = 0
             input.solidComponentSize = .none
             input = input.resolvingMeasurements()
             return
         }
-        input.solidComponentMm = value
+        input.solidComponentMm = measurement.value
         input = input.resolvingMeasurements()
     }
 
-    private func parseMeasurement(_ text: String) -> Double? {
-        let normalized = text.trimmingCharacters(in: .whitespacesAndNewlines)
-            .replacingOccurrences(of: ",", with: ".")
-        guard let value = Double(normalized) else { return nil }
-        guard value.isFinite, roundToNearestMm(value) != nil else { return nil }
-        return value
+    private func parseMeasurement(_ text: String) -> (value: Double, rounded: Int)? {
+        guard let value = NumericInputParser.parseDouble(text),
+              let rounded = NumericInputParser.roundToNearestMm(value) else { return nil }
+        return (value, rounded)
     }
 
     private func updateSizeFromAxes() {
         guard useAxisMeasurements else { return }
         guard let longAxis = parseMeasurement(longAxisText),
               let shortAxis = parseMeasurement(shortAxisText),
-              longAxis > 0,
-              shortAxis > 0 else {
+              longAxis.value > 0,
+              shortAxis.value > 0 else {
             axisMeanMm = nil
             roundedSizeMm = nil
             input.sizeMm = nil
             input.sizeCategory = .lessThanSix
             return
         }
-        let mean = (longAxis + shortAxis) / 2.0
-        guard let rounded = roundToNearestMm(mean) else {
+        let mean = (longAxis.value + shortAxis.value) / 2.0
+        guard let rounded = NumericInputParser.roundToNearestMm(mean) else {
             axisMeanMm = nil
             roundedSizeMm = nil
             input.sizeMm = nil
@@ -111,11 +108,6 @@ class FleischnerViewModel: ObservableObject {
         String(format: "%.1f", value)
     }
 
-    private func roundToNearestMm(_ value: Double) -> Int? {
-        guard value.isFinite else { return nil }
-        return Int(exactly: value.rounded(.toNearestOrAwayFromZero))
-    }
-
     var axisMeanDisplay: String {
         guard let mean = axisMeanMm else { return "--" }
         return formatSize(mean)
@@ -126,7 +118,7 @@ class FleischnerViewModel: ObservableObject {
         if useAxisMeasurements {
             rawValue = axisMeanMm
         } else {
-            rawValue = parseMeasurement(sizeText)
+            rawValue = parseMeasurement(sizeText)?.value
         }
         guard let raw = rawValue, let rounded = roundedSizeMm else { return nil }
         let fractional = abs(raw - Double(rounded)) > 0.0001

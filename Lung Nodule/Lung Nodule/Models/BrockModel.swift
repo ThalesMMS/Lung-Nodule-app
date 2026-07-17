@@ -1,5 +1,12 @@
 import Foundation
 
+enum BrockGender: String, CaseIterable, Identifiable {
+    case male = "Male"
+    case female = "Female"
+
+    var id: Self { self }
+}
+
 enum BrockNoduleType: String, CaseIterable, Identifiable {
     case nonsolid = "Non-solid (GG)"
     case partSolid = "Part-solid"

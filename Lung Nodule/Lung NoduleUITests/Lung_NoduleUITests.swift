@@ -1,41 +1,62 @@
-//
-//  Lung_NoduleUITests.swift
-//  Lung NoduleUITests
-//
-//  Created by Thales Matheus Mendonça Santos on 27/12/25.
-//
-
 import XCTest
 
 final class Lung_NoduleUITests: XCTestCase {
+    private var app: XCUIApplication!
 
     override func setUpWithError() throws {
-        // Put setup code here. This method is called before the invocation of each test method in the class.
-
-        // In UI tests it is usually best to stop immediately when a failure occurs.
         continueAfterFailure = false
-
-        // In UI tests it’s important to set the initial state - such as interface orientation - required for your tests before they run. The setUp method is a good place to do this.
-    }
-
-    override func tearDownWithError() throws {
-        // Put teardown code here. This method is called after the invocation of each test method in the class.
-    }
-
-    @MainActor
-    func testExample() throws {
-        // UI tests must launch the application that they test.
-        let app = XCUIApplication()
+        app = XCUIApplication()
         app.launch()
-
-        // Use XCTAssert and related functions to verify your tests produce the correct results.
     }
 
     @MainActor
-    func testLaunchPerformance() throws {
-        // This measures how long it takes to launch your application.
-        measure(metrics: [XCTApplicationLaunchMetric()]) {
-            XCUIApplication().launch()
-        }
+    func testSwitchesBetweenCalculators() {
+        let lungRADS = app.buttons["calculator.lung-rads"]
+        lungRADS.tap()
+        waitForSelection(of: lungRADS)
+
+        let fleischner = app.buttons["calculator.fleischner"]
+        fleischner.tap()
+        waitForSelection(of: fleischner)
+    }
+
+    @MainActor
+    func testEnteringNoduleSizeUpdatesRecommendation() {
+        let sizeField = element("fleischner.size")
+        XCTAssertTrue(sizeField.waitForExistence(timeout: 3))
+        sizeField.tap()
+        sizeField.typeText("8")
+
+        let result = element("fleischner.result")
+        let updated = expectation(
+            for: NSPredicate(format: "value CONTAINS %@", "6-12 months"),
+            evaluatedWith: result
+        )
+        wait(for: [updated], timeout: 3)
+    }
+
+    @MainActor
+    func testOpensCommonIssuesDetail() {
+        let info = app.buttons["mode.info"]
+        XCTAssertTrue(info.waitForExistence(timeout: 3))
+        info.tap()
+
+        let eligibility = app.buttons["Eligibility"]
+        XCTAssertTrue(eligibility.waitForExistence(timeout: 3))
+        eligibility.tap()
+
+        XCTAssertTrue(element("fleischner.eligibility.detail").waitForExistence(timeout: 3))
+    }
+
+    private func element(_ identifier: String) -> XCUIElement {
+        app.descendants(matching: .any)[identifier]
+    }
+
+    private func waitForSelection(of element: XCUIElement) {
+        let selected = expectation(
+            for: NSPredicate(format: "value == %@", "Selected"),
+            evaluatedWith: element
+        )
+        wait(for: [selected], timeout: 3)
     }
 }

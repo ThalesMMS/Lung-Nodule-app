@@ -26,7 +26,7 @@ xcodebuild -list -project "Lung Nodule/Lung Nodule.xcodeproj"
 - Lung-RADS v2022 calculator with baseline/follow-up logic, morphology, size, and suspicious feature inputs.
 - Common-issues reference screens for both guideline sets.
 - S-Modifier considerations checklist (informational).
-- Brock full model form (**UI scaffold only; calculation not implemented yet**).
+- Brock full model malignancy risk calculator using the published logistic regression inputs.
 - Dark-mode UI and segmented calculator switcher.
 
 ## Status and intended use
@@ -107,7 +107,7 @@ These examples are meant to make the app behavior easier to verify against the c
 ## Limitations and evaluation caveats
 - The app has **logic tests**, but this repository does **not** include a prospective clinical validation study or an outcomes dataset.
 - Passing tests shows consistency with the encoded rules and edge cases in the repo; it does **not** prove clinical safety, effectiveness, or regulatory fitness.
-- The Brock risk form is currently a UI scaffold and should not be interpreted as a functioning risk model.
+- The Brock calculator implements the published logistic regression formula, but has not been independently clinically validated.
 - Recommendations depend on user-entered values. Incorrect measurements, context selection, or risk labeling will produce misleading outputs.
 - Edge cases may still require direct consultation of the original guideline documents, especially when morphology, prior imaging history, comorbidities, or institutional pathways complicate categorization.
 - The repository should not be used to make unsupervised screening, biopsy, surveillance, or treatment decisions.

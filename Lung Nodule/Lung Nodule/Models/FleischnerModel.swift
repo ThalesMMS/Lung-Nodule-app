@@ -84,7 +84,7 @@ extension FleischnerInput {
 private extension FleischnerSize {
     init?(roundedMillimeters sizeMm: Double?) {
         guard let sizeMm, sizeMm > 0 else { return nil }
-        guard let rounded = roundedMillimeterInt(from: sizeMm) else { return nil }
+        guard let rounded = NumericInputParser.roundToNearestMm(sizeMm) else { return nil }
         if rounded < 6 {
             self = .lessThanSix
         } else if rounded <= 8 {
@@ -98,7 +98,7 @@ private extension FleischnerSize {
 private extension FleischnerSolidComponentSize {
     init?(roundedMillimeters sizeMm: Double?) {
         guard let sizeMm else { return nil }
-        guard let rounded = roundedMillimeterInt(from: sizeMm) else { return nil }
+        guard let rounded = NumericInputParser.roundToNearestMm(sizeMm) else { return nil }
         if rounded <= 0 {
             self = .none
         } else if rounded < 6 {
@@ -107,11 +107,6 @@ private extension FleischnerSolidComponentSize {
             self = .sixOrMore
         }
     }
-}
-
-private func roundedMillimeterInt(from sizeMm: Double) -> Int? {
-    guard sizeMm.isFinite else { return nil }
-    return Int(exactly: sizeMm.rounded(.toNearestOrAwayFromZero))
 }
 
 struct FleischnerRecommendation {

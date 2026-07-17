@@ -6,6 +6,28 @@ enum AppMode {
     case risk // 'Head' icon - Risk/Patient Info? (Placeholder)
     case calculator // 'Calculator' icon
     case menu // 'Ellipsis' icon - Menu/Settings
+
+    var accessibilityLabel: String {
+        switch self {
+        case .info: return "Common issues"
+        case .calculator: return "Guideline calculator"
+        case .risk: return "Brock risk calculator"
+        case .menu: return "References"
+        }
+    }
+
+    var accessibilityHint: String {
+        "Shows the \(accessibilityLabel.lowercased()) screen."
+    }
+
+    var accessibilityIdentifier: String {
+        switch self {
+        case .info: return "mode.info"
+        case .calculator: return "mode.calculator"
+        case .risk: return "mode.brock"
+        case .menu: return "mode.references"
+        }
+    }
 }
 
 enum CalculatorType: String, CaseIterable, Identifiable {
@@ -13,6 +35,13 @@ enum CalculatorType: String, CaseIterable, Identifiable {
     case lungRADS = "Lung-RADS v2022"
     
     var id: String { self.rawValue }
+
+    var accessibilityIdentifier: String {
+        switch self {
+        case .fleischner: return "calculator.fleischner"
+        case .lungRADS: return "calculator.lung-rads"
+        }
+    }
     
     var color: Color {
         switch self {
@@ -25,7 +54,7 @@ enum CalculatorType: String, CaseIterable, Identifiable {
 struct ContentView: View {
     @State private var selectedCalculator: CalculatorType = .fleischner
     @State private var startMode: AppMode = .calculator // Default to calculator as per user request for tool
-    @State private var brockForm = BrockFormState()
+    @StateObject private var brockViewModel = BrockViewModel()
     @State private var brockHandoffError: String?
     @State private var selectedReference: ReferenceType?
     @Namespace private var segmentAnimation
@@ -71,7 +100,7 @@ struct ContentView: View {
                                 HStack(alignment: .top, spacing: 10) {
                                     Image(systemName: "info.circle.fill")
                                         .foregroundColor(.white.opacity(0.5))
-                                    Text("This application is a decision support tool for healthcare professionals and does not replace clinical judgment. Management should be based on the original guidelines (ACR/Fleischner).")
+                                    Text(MedicalCopy.decisionSupportDisclaimer)
                                         .font(.subheadline)
                                         .foregroundColor(.white.opacity(0.65))
                                         .multilineTextAlignment(.leading)
@@ -194,7 +223,7 @@ struct ContentView: View {
                             .padding(.bottom, 40)
                         } else if startMode == .risk {
                             // Brock Full Model Calculator
-                            BrockView(form: $brockForm)
+                            BrockView(viewModel: brockViewModel)
                                 .padding(.top)
                         } else {
                             Text("Other Mode")
@@ -203,11 +232,11 @@ struct ContentView: View {
                         }
                     }
                 }
+                .frame(maxWidth: 1100)
             }
             // Hide default nav bar since we built a custom top bar
             .toolbar(.hidden, for: .navigationBar)
         }
-        .preferredColorScheme(.dark) // Force dark mode
         .alert("Brock handoff unavailable", isPresented: brockHandoffAlertPresented) {
             Button("OK", role: .cancel) { brockHandoffError = nil }
         } message: {
@@ -226,16 +255,15 @@ struct ContentView: View {
             return
         }
 
-        let defaultMorphologyIndex = BrockNoduleType.allCases.firstIndex(of: .solid) ?? 0
         var nextForm = BrockFormState()
 
         if let size = input.sizeMm, size > 0 {
             nextForm.noduleSize = formatSize(size)
         }
         nextForm.noduleCount = input.isMultiple ? "2" : "1"
-        nextForm.noduleMorphology = BrockNoduleType.allCases.firstIndex(of: noduleType) ?? defaultMorphologyIndex
+        nextForm.noduleMorphology = noduleType
 
-        brockForm = nextForm
+        brockViewModel.form = nextForm
         startMode = .risk
     }
 
@@ -262,7 +290,7 @@ struct ContentView: View {
             }
         } label: {
             Image(systemName: systemName)
-                .font(.system(size: 17, weight: .semibold))
+                .font(.headline)
                 .foregroundColor(isSelected ? .black : .white.opacity(0.7))
                 .frame(width: 38, height: 38)
                 .background {
@@ -271,6 +299,10 @@ struct ContentView: View {
                 }
         }
         .buttonStyle(.plain)
+        .accessibilityIdentifier(mode.accessibilityIdentifier)
+        .accessibilityLabel(mode.accessibilityLabel)
+        .accessibilityHint(mode.accessibilityHint)
+        .accessibilityValue(isSelected ? "Selected" : "Not selected")
     }
 
     private var calculatorSwitcher: some View {
@@ -295,6 +327,8 @@ struct ContentView: View {
                         }
                 }
                 .buttonStyle(.plain)
+                .accessibilityIdentifier(type.accessibilityIdentifier)
+                .accessibilityValue(selectedCalculator == type ? "Selected" : "Not selected")
             }
         }
         .padding(4)
@@ -311,7 +345,7 @@ struct InfoRow: View {
     var body: some View {
         HStack(spacing: 12) {
             Image(systemName: icon)
-                .font(.system(size: 15, weight: .semibold))
+                .font(.subheadline.weight(.semibold))
                 .foregroundColor(accentColor)
                 .frame(width: 32, height: 32)
                 .background(accentColor.opacity(0.14), in: Circle())

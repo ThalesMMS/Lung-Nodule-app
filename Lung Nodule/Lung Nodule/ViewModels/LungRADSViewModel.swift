@@ -204,9 +204,7 @@ class LungRADSViewModel: ObservableObject {
     }
 
     private func parseDouble(_ text: String) -> Double? {
-        let normalized = text.trimmingCharacters(in: .whitespacesAndNewlines)
-            .replacingOccurrences(of: ",", with: ".")
-        guard let value = Double(normalized) else { return nil }
+        guard let value = NumericInputParser.parseDouble(text) else { return nil }
         return normalizeMeasurement(value)
     }
 
@@ -265,14 +263,11 @@ class LungRADSViewModel: ObservableObject {
     }
 
     private func parseRawDouble(_ text: String) -> Double? {
-        let normalized = text.trimmingCharacters(in: .whitespacesAndNewlines)
-            .replacingOccurrences(of: ",", with: ".")
-        return Double(normalized)
+        NumericInputParser.parseDouble(text)
     }
 
     private func parseInt(_ text: String) -> Int? {
-        let normalized = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        return Int(normalized)
+        NumericInputParser.parseInt(text)
     }
 
     private var hasRequiredInputsForCalculation: Bool {

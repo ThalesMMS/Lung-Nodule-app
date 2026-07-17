@@ -97,7 +97,7 @@ struct PillButton: View {
     var body: some View {
         Button(action: action) {
             Label(title, systemImage: icon)
-                .font(.system(size: 14, weight: .semibold))
+                .font(.subheadline.weight(.semibold))
                 .foregroundColor(accentColor)
                 .padding(.horizontal, 14)
                 .padding(.vertical, 10)

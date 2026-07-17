@@ -1,6 +1,6 @@
 import Foundation
 
-enum ReferenceType: Equatable, Identifiable {
+enum ReferenceType: CaseIterable, Equatable, Identifiable {
     case fleischnerGuideline
     case lungRADSGuideline
     case lungRADSTable

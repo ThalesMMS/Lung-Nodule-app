@@ -1,0 +1,91 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "accessibility.s-modifier.toggle-hint" : {
+      "comment" : "Fallback hint for an S modifier finding toggle without a recommendation.",
+      "extractionState" : "manual",
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Marks this finding for the S modifier." } } }
+    },
+    "medical.brock.description" : {
+      "comment" : "Description shown at the top of the Brock risk calculator.",
+      "extractionState" : "manual",
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "The Brock full model estimates a CT-detected nodule's 2-4 year malignancy risk." } } }
+    },
+    "medical.disclaimer" : {
+      "comment" : "Clinical disclaimer shown above the common issues list.",
+      "extractionState" : "manual",
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "This application is a decision support tool for healthcare professionals and does not replace clinical judgment. Management should be based on the original guidelines (ACR/Fleischner)." } } }
+    },
+    "medical.fleischner.purpose" : {
+      "comment" : "Purpose of the Fleischner Society guidelines.",
+      "extractionState" : "manual",
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Management of incidentally detected pulmonary nodules on CT in routine clinical practice." } } }
+    },
+    "medical.lungrads.mean-diameter" : {
+      "comment" : "Definition of mean nodule diameter in Lung-RADS.",
+      "extractionState" : "manual",
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Average of long and short axis measurements on the same axial image." } } }
+    },
+    "section.age-criteria" : {
+      "comment" : "Medical information section header.",
+      "extractionState" : "manual",
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "AGE CRITERIA" } } }
+    },
+    "section.exclusions" : {
+      "comment" : "Medical information section header.",
+      "extractionState" : "manual",
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "EXCLUSIONS" } } }
+    },
+    "section.fleischner-guidelines" : {
+      "comment" : "Medical information section header.",
+      "extractionState" : "manual",
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "2017 FLEISCHNER SOCIETY GUIDELINES" } } }
+    },
+    "section.general" : {
+      "comment" : "Medical information section header.",
+      "extractionState" : "manual",
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "GENERAL" } } }
+    },
+    "section.juxtapleural-nodules" : {
+      "comment" : "Medical information section header.",
+      "extractionState" : "manual",
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "JUXTAPLEURAL NODULES" } } }
+    },
+    "section.measuring-nodules" : {
+      "comment" : "Medical information section header.",
+      "extractionState" : "manual",
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "MEASURING NODULES" } } }
+    },
+    "section.nodule-types" : {
+      "comment" : "Medical information section header.",
+      "extractionState" : "manual",
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "NODULE TYPES" } } }
+    },
+    "section.perifissural-nodules" : {
+      "comment" : "Medical information section header.",
+      "extractionState" : "manual",
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "PERIFISSURAL NODULES" } } }
+    },
+    "section.smoking-history-criteria" : {
+      "comment" : "Medical information section header.",
+      "extractionState" : "manual",
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "SMOKING HISTORY CRITERIA" } } }
+    },
+    "section.smoking-quit-time-criteria" : {
+      "comment" : "Medical information section header.",
+      "extractionState" : "manual",
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "SMOKING QUIT-TIME CRITERIA" } } }
+    },
+    "section.solid-and-non-solid-nodules" : {
+      "comment" : "Medical information section header.",
+      "extractionState" : "manual",
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "SOLID NODULES AND NON-SOLID (GROUND-GLASS) NODULES" } } }
+    },
+    "section.stepped-management" : {
+      "comment" : "Medical information section header.",
+      "extractionState" : "manual",
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "STEPPED MANAGEMENT" } } }
+    }
+  },
+  "version" : "1.0"
+}

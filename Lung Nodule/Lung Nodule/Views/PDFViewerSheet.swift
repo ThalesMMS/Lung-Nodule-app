@@ -1,5 +1,6 @@
 import PDFKit
 import SwiftUI
+import OSLog
 
 struct PDFViewerSheet: View {
     @Environment(\.dismiss) private var dismiss
@@ -39,6 +40,11 @@ struct PDFViewerSheet: View {
 }
 
 private struct PDFKitView: UIViewRepresentable {
+    private static let logger = Logger(
+        subsystem: Bundle.main.bundleIdentifier ?? "Lung_Nodule",
+        category: "PDFViewer"
+    )
+
     let url: URL
     let onLoadFailure: (() -> Void)?
 
@@ -50,6 +56,7 @@ private struct PDFKitView: UIViewRepresentable {
         if let document = PDFDocument(url: url) {
             pdfView.document = document
         } else {
+            Self.logger.error("Failed to load bundled PDF: \(url.lastPathComponent, privacy: .public)")
             DispatchQueue.main.async {
                 onLoadFailure?()
             }

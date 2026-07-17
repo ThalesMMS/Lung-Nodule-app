@@ -10,7 +10,6 @@ struct FleischnerView: View {
     @State private var highRiskSmokingHistory = false
     @State private var highRiskExposure = false
     @State private var highRiskFamilyHistory = false
-    @State private var selectedReference: ReferenceType?
     @FocusState private var focusedField: FocusField?
 
     private enum FocusField {
@@ -21,77 +20,77 @@ struct FleischnerView: View {
     }
     
     var body: some View {
-        VStack(spacing: 16) {
-            // Result Card matching reference Main_Fleischner.PNG
+        AdaptiveCalculatorGrid {
             resultCard
-            morphologyRow
-            sizeSection
-            
-            // High Risk Patient Row
-            FleischnerSettingsRow(
-                title: "High Risk Patient",
-                hasInfo: true,
-                onInfoTap: { showRiskInfo = true },
-                trailing: {
-                    Toggle("", isOn: Binding(
-                        get: { viewModel.input.risk == .high },
-                        set: { isHighRisk in
-                            viewModel.input.risk = isHighRisk ? .high : .low
-                            if !isHighRisk {
-                                highRiskSmokingHistory = false
-                                highRiskExposure = false
-                                highRiskFamilyHistory = false
-                            }
-                        }
-                    ))
-                    .labelsHidden()
-                }
-            )
-            
-            // Solid Component Size Row (only for Part-Solid)
-            if viewModel.input.noduleType == .partSolid {
-                FleischnerSettingsRow(
-                    title: "Solid Component",
+
+            VStack(spacing: 16) {
+                morphologyRow
+                sizeSection
+
+                SettingsRow(
+                    title: "High Risk Patient",
                     hasInfo: true,
-                    onInfoTap: { showSolidComponentInfo = true },
+                    onInfoTap: { showRiskInfo = true },
                     trailing: {
-                        HStack(spacing: 6) {
-                            TextField("0", text: $viewModel.solidComponentText)
-                                .keyboardType(.decimalPad)
-                                .multilineTextAlignment(.trailing)
-                                .foregroundColor(Color.fleischnerAccent)
-                                .frame(width: 70)
-                                .focused($focusedField, equals: .solidComponent)
-                            Text("mm")
-                                .foregroundColor(.gray)
-                        }
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 6)
-                        .background(Color.fleischnerAccent.opacity(0.12), in: Capsule())
+                        Toggle("", isOn: Binding(
+                            get: { viewModel.input.risk == .high },
+                            set: { isHighRisk in
+                                viewModel.input.risk = isHighRisk ? .high : .low
+                                if !isHighRisk {
+                                    highRiskSmokingHistory = false
+                                    highRiskExposure = false
+                                    highRiskFamilyHistory = false
+                                }
+                            }
+                        ))
+                        .labelsHidden()
+                        .accessibilityLabel("High Risk Patient")
                     }
                 )
-            }
-            
-            // Multiple Row
-            FleischnerSettingsRow(
-                title: "Multiple",
-                hasInfo: true,
-                onInfoTap: { showMultipleInfo = true },
-                trailing: {
-                    Toggle("", isOn: $viewModel.input.isMultiple)
-                        .labelsHidden()
+
+                if viewModel.input.noduleType == .partSolid {
+                    SettingsRow(
+                        title: "Solid Component",
+                        hasInfo: true,
+                        onInfoTap: { showSolidComponentInfo = true },
+                        trailing: {
+                            HStack(spacing: 6) {
+                                TextField("0", text: $viewModel.solidComponentText)
+                                    .keyboardType(.decimalPad)
+                                    .multilineTextAlignment(.trailing)
+                                    .foregroundColor(Color.fleischnerAccent)
+                                    .frame(minWidth: 60, idealWidth: 70, maxWidth: 100)
+                                    .focused($focusedField, equals: .solidComponent)
+                                Text("mm")
+                                    .foregroundColor(.gray)
+                            }
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 6)
+                            .background(Color.fleischnerAccent.opacity(0.12), in: Capsule())
+                        }
+                    )
                 }
-            )
-            
-            // Reference link
-            Button(action: { selectedReference = .fleischnerGuideline }) {
-                Text("Reference")
-                    .foregroundColor(Color.fleischnerAccent)
+
+                SettingsRow(
+                    title: "Multiple",
+                    hasInfo: true,
+                    onInfoTap: { showMultipleInfo = true },
+                    trailing: {
+                        Toggle("", isOn: $viewModel.input.isMultiple)
+                            .labelsHidden()
+                            .accessibilityLabel("Multiple Nodules")
+                    }
+                )
+
+                ReferenceButton(
+                    reference: .fleischnerGuideline,
+                    accentColor: .fleischnerAccent,
+                    topPadding: 8,
+                    bottomPadding: 0
+                )
             }
-            .padding(.top, 8)
-            
-            Spacer()
         }
+        .padding(.horizontal, 8)
         .tint(Color.fleischnerAccent)
         .onAppear { viewModel.calculate() }
         .onChange(of: viewModel.input.noduleType) { _, _ in viewModel.calculate() }
@@ -109,16 +108,16 @@ struct FleischnerView: View {
                     .foregroundColor(Color.fleischnerAccent)
             }
         }
-        .alert("Nodule Morphology", isPresented: $showMorphologyInfo) {
-            Button("OK", role: .cancel) { }
-        } message: {
-            Text("• Solid: entirely soft-tissue attenuation.\n• Non-Solid (Ground-Glass): no measurable solid component.\n• Part-Solid: both ground-glass and solid components.")
-        }
-        .alert("Nodule Measurement", isPresented: $showSizeInfo) {
-            Button("OK", role: .cancel) { }
-        } message: {
-            Text("< 3 mm: Do not measure (use \"micronodule\" descriptor).\n\n3–10 mm: Report the average diameter = (long-axis + short-axis) / 2.\n\n≥ 10 mm: Report both long-axis and short-axis measurements.\n\nBoth measurements and averages should be expressed to the nearest whole millimeter.\n\nFor further guidance, tap the \"Common Issues\" (info circle icon) in the top-left corner of the app, then tap \"Measuring Nodules.\"")
-        }
+        .informationAlert(
+            "Nodule Morphology",
+            isPresented: $showMorphologyInfo,
+            message: "• Solid: entirely soft-tissue attenuation.\n• Non-Solid (Ground-Glass): no measurable solid component.\n• Part-Solid: both ground-glass and solid components."
+        )
+        .informationAlert(
+            "Nodule Measurement",
+            isPresented: $showSizeInfo,
+            message: "< 3 mm: Do not measure (use \"micronodule\" descriptor).\n\n3–10 mm: Report the average diameter = (long-axis + short-axis) / 2.\n\n≥ 10 mm: Report both long-axis and short-axis measurements.\n\nBoth measurements and averages should be expressed to the nearest whole millimeter.\n\nFor further guidance, tap the \"Common Issues\" (info circle icon) in the top-left corner of the app, then tap \"Measuring Nodules.\""
+        )
         .sheet(isPresented: $showRiskInfo) {
             FleischnerHighRiskChecklistView(
                 isHighRisk: Binding(
@@ -130,17 +129,16 @@ struct FleischnerView: View {
                 familyHistory: $highRiskFamilyHistory
             )
         }
-        .alert("Multiple Nodules", isPresented: $showMultipleInfo) {
-            Button("OK", role: .cancel) { }
-        } message: {
-            Text("If one nodule is larger or more suspicious than the others, management should be based upon guidelines for solitary nodules")
-        }
-        .alert("Solid Component Size", isPresented: $showSolidComponentInfo) {
-            Button("OK", role: .cancel) { }
-        } message: {
-            Text("For part-solid nodules, measure the solid component on lung windows. The solid component size determines management recommendations.")
-        }
-        .referencePresenter(reference: $selectedReference)
+        .informationAlert(
+            "Multiple Nodules",
+            isPresented: $showMultipleInfo,
+            message: "If one nodule is larger or more suspicious than the others, management should be based upon guidelines for solitary nodules"
+        )
+        .informationAlert(
+            "Solid Component Size",
+            isPresented: $showSolidComponentInfo,
+            message: "For part-solid nodules, measure the solid component on lung windows. The solid component size determines management recommendations."
+        )
     }
 
     private func updateHighRiskFromChecklist() {
@@ -156,19 +154,19 @@ struct FleischnerView: View {
             VStack(spacing: 14) {
                 HStack(alignment: .top, spacing: 12) {
                     Image(systemName: FleischnerSeverity.icon(for: result.recommendation))
-                        .font(.system(size: 20, weight: .semibold))
+                        .font(.title3.weight(.semibold))
                         .foregroundColor(severityColor)
                         .frame(width: 44, height: 44)
                         .background(severityColor.opacity(0.15), in: Circle())
 
                     VStack(alignment: .leading, spacing: 4) {
                         Text(primaryRecommendation(from: result.recommendation))
-                            .font(.system(size: 17, weight: .semibold))
+                            .font(.headline)
                             .foregroundColor(.white)
 
                         if hasSecondaryRecommendation(result.recommendation) {
                             Text(secondaryRecommendation(from: result.recommendation))
-                                .font(.system(size: 14, weight: .medium))
+                                .font(.subheadline.weight(.medium))
                                 .foregroundColor(.white.opacity(0.6))
                         }
                     }
@@ -181,33 +179,29 @@ struct FleischnerView: View {
             .padding(20)
             .cardStyle()
             .padding(.horizontal, 16)
+            .accessibilityElement(children: .ignore)
+            .accessibilityIdentifier("fleischner.result")
+            .accessibilityLabel("Fleischner result")
+            .accessibilityValue(result.recommendation)
         }
     }
 
     private var morphologyRow: some View {
-        FleischnerSettingsRow(
+        SettingsRow(
             title: "Nodule Morphology",
             hasInfo: true,
             onInfoTap: { showMorphologyInfo = true },
             trailing: {
-                Menu {
-                    ForEach(NoduleType.allCases) { type in
-                        Button(type.rawValue) {
+                SettingsMenuPicker(
+                    selection: viewModel.input.noduleType.rawValue,
+                    accentColor: .fleischnerAccent,
+                    options: NoduleType.allCases.map(\.rawValue),
+                    onSelect: { value in
+                        if let type = NoduleType.allCases.first(where: { $0.rawValue == value }) {
                             viewModel.input.noduleType = type
                         }
                     }
-                } label: {
-                    HStack(spacing: 4) {
-                        Text(viewModel.input.noduleType.rawValue)
-                            .font(.subheadline.weight(.semibold))
-                        Image(systemName: "chevron.up.chevron.down")
-                            .font(.caption2.weight(.bold))
-                    }
-                    .foregroundColor(Color.fleischnerAccent)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 6)
-                    .background(Color.fleischnerAccent.opacity(0.12), in: Capsule())
-                }
+                )
             }
         )
     }
@@ -222,7 +216,7 @@ struct FleischnerView: View {
     }
 
     private var sizeRow: some View {
-        FleischnerSettingsRow(
+        SettingsRow(
             title: "Nodule Size",
             hasInfo: true,
             onInfoTap: { showSizeInfo = true },
@@ -240,10 +234,11 @@ struct FleischnerView: View {
                 } else {
                     HStack(spacing: 6) {
                         TextField("0", text: $viewModel.sizeText)
+                            .accessibilityIdentifier("fleischner.size")
                             .keyboardType(.decimalPad)
                             .multilineTextAlignment(.trailing)
                             .foregroundColor(Color.fleischnerAccent)
-                            .frame(width: 70)
+                            .frame(minWidth: 60, idealWidth: 70, maxWidth: 100)
                             .focused($focusedField, equals: .size)
                         Text("mm")
                             .foregroundColor(.gray)
@@ -257,11 +252,12 @@ struct FleischnerView: View {
     }
 
     private var axisToggleRow: some View {
-        FleischnerSettingsRow(
+        SettingsRow(
             title: "Use long/short axes",
             trailing: {
                 Toggle("", isOn: $viewModel.useAxisMeasurements)
                     .labelsHidden()
+                    .accessibilityLabel("Use long and short axes")
             }
         )
     }
@@ -269,7 +265,7 @@ struct FleischnerView: View {
     @ViewBuilder
     private var axisRows: some View {
         if viewModel.useAxisMeasurements {
-            FleischnerSettingsRow(
+            SettingsRow(
                 title: "Long axis",
                 trailing: {
                     HStack(spacing: 6) {
@@ -277,7 +273,7 @@ struct FleischnerView: View {
                             .keyboardType(.decimalPad)
                             .multilineTextAlignment(.trailing)
                             .foregroundColor(Color.fleischnerAccent)
-                            .frame(width: 70)
+                            .frame(minWidth: 60, idealWidth: 70, maxWidth: 100)
                             .focused($focusedField, equals: .longAxis)
                         Text("mm")
                             .foregroundColor(.gray)
@@ -288,7 +284,7 @@ struct FleischnerView: View {
                 }
             )
 
-            FleischnerSettingsRow(
+            SettingsRow(
                 title: "Short axis",
                 trailing: {
                     HStack(spacing: 6) {
@@ -296,7 +292,7 @@ struct FleischnerView: View {
                             .keyboardType(.decimalPad)
                             .multilineTextAlignment(.trailing)
                             .foregroundColor(Color.fleischnerAccent)
-                            .frame(width: 70)
+                            .frame(minWidth: 60, idealWidth: 70, maxWidth: 100)
                             .focused($focusedField, equals: .shortAxis)
                         Text("mm")
                             .foregroundColor(.gray)
@@ -381,28 +377,23 @@ struct FleischnerHighRiskChecklistView: View {
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 16)
 
-                VStack(spacing: 0) {
-                    toggleRow(
+                GroupedToggleCard(rows: [
+                    GroupedToggleRow(
+                        id: "risk.smoking-history",
                         title: "Smoking history",
                         isOn: $smokingHistory
-                    )
-
-                    Divider().background(Color.subtleDivider)
-
-                    toggleRow(
+                    ),
+                    GroupedToggleRow(
+                        id: "risk.exposure-history",
                         title: "Asbestos/radon/uranium exposure",
                         isOn: $exposureHistory
-                    )
-
-                    Divider().background(Color.subtleDivider)
-
-                    toggleRow(
+                    ),
+                    GroupedToggleRow(
+                        id: "risk.family-history",
                         title: "First-degree relative with lung cancer",
                         isOn: $familyHistory
                     )
-                }
-                .cardStyle(cornerRadius: 12)
-                .padding(.horizontal, 16)
+                ])
 
                 Spacer()
             }
@@ -423,49 +414,8 @@ struct FleischnerHighRiskChecklistView: View {
         .tint(greenAccent)
     }
 
-    private func toggleRow(title: String, isOn: Binding<Bool>) -> some View {
-        HStack {
-            Text(title)
-                .foregroundColor(.white)
-            Spacer()
-            Toggle("", isOn: isOn)
-                .labelsHidden()
-        }
-        .padding()
-    }
-
     private func updateRisk() {
         isHighRisk = smokingHistory || exposureHistory || familyHistory
-    }
-}
-
-// Reusable settings row component for Fleischner (green accent)
-struct FleischnerSettingsRow<Trailing: View>: View {
-    let title: String
-    var hasInfo: Bool = false
-    var onInfoTap: (() -> Void)? = nil
-    @ViewBuilder let trailing: () -> Trailing
-    
-    var body: some View {
-        HStack(spacing: 8) {
-            Text(title)
-                .foregroundColor(.white)
-
-            if hasInfo {
-                Button(action: { onInfoTap?() }) {
-                    Image(systemName: "info.circle")
-                        .font(.caption)
-                        .foregroundColor(Color.fleischnerAccent)
-                }
-            }
-
-            Spacer()
-
-            trailing()
-        }
-        .padding()
-        .cardStyle(cornerRadius: 12)
-        .padding(.horizontal, 16)
     }
 }
 

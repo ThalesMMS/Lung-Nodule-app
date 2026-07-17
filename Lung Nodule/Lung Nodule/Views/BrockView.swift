@@ -1,20 +1,7 @@
 import SwiftUI
 
-struct BrockFormState {
-    var age: String = ""
-    var gender: Int = 0
-    var noduleSize: String = ""
-    var noduleMorphology: Int = 0
-    var upperLobe: Bool = false
-    var noduleCount: String = ""
-    var spiculation: Bool = false
-    var familyHistory: Bool = false
-    var emphysema: Bool = false
-}
-
 struct BrockView: View {
-    @Binding var form: BrockFormState
-    @State private var selectedReference: ReferenceType?
+    @ObservedObject var viewModel: BrockViewModel
     @FocusState private var focusedField: FocusField?
     private let blueAccent = Color.lungRADSAccent
 
@@ -25,26 +12,29 @@ struct BrockView: View {
     }
 
     var body: some View {
-        VStack(spacing: 16) {
-            Text("The Brock full model estimates a CT-detected nodule's 2-4 year malignancy risk.")
-                .font(.subheadline)
-                .foregroundColor(.white)
-                .multilineTextAlignment(.center)
-                .padding()
-                .frame(maxWidth: .infinity)
-                .cardStyle(cornerRadius: 12)
-                .padding(.horizontal, 16)
+        AdaptiveCalculatorGrid {
+            VStack(spacing: 16) {
+                Text(MedicalCopy.brockModelDescription)
+                    .font(.subheadline)
+                    .foregroundColor(.white)
+                    .multilineTextAlignment(.center)
+                    .padding()
+                    .frame(maxWidth: .infinity)
+                    .cardStyle(cornerRadius: 12)
+                    .padding(.horizontal, 16)
 
-            patientSection
-            noduleSection
-            riskFactorsSection
-            resultSection
-            referenceButton
+                patientSection
+            }
 
-            Spacer()
+            VStack(spacing: 16) {
+                noduleSection
+                riskFactorsSection
+                resultSection
+                referenceButton
+            }
         }
+        .padding(.horizontal, 8)
         .tint(blueAccent)
-        .referencePresenter(reference: $selectedReference)
         .toolbar {
             ToolbarItemGroup(placement: .keyboard) {
                 Spacer()
@@ -68,11 +58,11 @@ struct BrockView: View {
                     Text("Age (>= 18 yrs)")
                         .foregroundColor(.white)
                     Spacer()
-                    TextField("", text: $form.age)
+                    TextField("", text: $viewModel.form.age)
                         .keyboardType(.numberPad)
                         .multilineTextAlignment(.trailing)
                         .foregroundColor(.gray)
-                        .frame(width: 60)
+                        .frame(minWidth: 50, idealWidth: 60, maxWidth: 90)
                         .focused($focusedField, equals: .age)
                     Text("yrs")
                         .foregroundColor(.gray)
@@ -86,9 +76,10 @@ struct BrockView: View {
                         .foregroundColor(.gray)
                         .font(.caption)
 
-                    Picker("Gender", selection: $form.gender) {
-                        Text("Male").tag(0)
-                        Text("Female").tag(1)
+                    Picker("Gender", selection: $viewModel.form.gender) {
+                        ForEach(BrockGender.allCases) { gender in
+                            Text(gender.rawValue).tag(gender)
+                        }
                     }
                     .pickerStyle(.segmented)
                     .tint(blueAccent)
@@ -114,11 +105,11 @@ struct BrockView: View {
                     Text("Size (3-30 mm)")
                         .foregroundColor(.white)
                     Spacer()
-                    TextField("", text: $form.noduleSize)
+                    TextField("", text: $viewModel.form.noduleSize)
                         .keyboardType(.decimalPad)
                         .multilineTextAlignment(.trailing)
                         .foregroundColor(.gray)
-                        .frame(width: 60)
+                        .frame(minWidth: 50, idealWidth: 60, maxWidth: 90)
                         .focused($focusedField, equals: .size)
                     Text("mm")
                         .foregroundColor(.gray)
@@ -132,9 +123,9 @@ struct BrockView: View {
                         .foregroundColor(.gray)
                         .font(.caption)
 
-                    Picker("Morphology", selection: $form.noduleMorphology) {
-                        ForEach(Array(BrockNoduleType.allCases.enumerated()), id: \.element.id) { index, type in
-                            Text(type.rawValue).tag(index)
+                    Picker("Morphology", selection: $viewModel.form.noduleMorphology) {
+                        ForEach(BrockNoduleType.allCases) { type in
+                            Text(type.rawValue).tag(type)
                         }
                     }
                     .pickerStyle(.segmented)
@@ -148,8 +139,9 @@ struct BrockView: View {
                     Text("Upper lobe")
                         .foregroundColor(.white)
                     Spacer()
-                    Toggle("", isOn: $form.upperLobe)
+                    Toggle("", isOn: $viewModel.form.upperLobe)
                         .labelsHidden()
+                        .accessibilityLabel("Upper lobe")
                 }
                 .padding()
 
@@ -159,11 +151,11 @@ struct BrockView: View {
                     Text("Nodule count (>= 1), no decimal")
                         .foregroundColor(.white)
                     Spacer()
-                    TextField("0", text: $form.noduleCount)
+                    TextField("0", text: $viewModel.form.noduleCount)
                         .keyboardType(.numberPad)
                         .multilineTextAlignment(.trailing)
                         .foregroundColor(.gray)
-                        .frame(width: 40)
+                        .frame(minWidth: 44, idealWidth: 50, maxWidth: 70)
                         .focused($focusedField, equals: .count)
                 }
                 .padding()
@@ -174,8 +166,9 @@ struct BrockView: View {
                     Text("Spiculation")
                         .foregroundColor(.white)
                     Spacer()
-                    Toggle("", isOn: $form.spiculation)
+                    Toggle("", isOn: $viewModel.form.spiculation)
                         .labelsHidden()
+                        .accessibilityLabel("Spiculation")
                 }
                 .padding()
             }
@@ -198,8 +191,9 @@ struct BrockView: View {
                     Text("Family history of lung cancer")
                         .foregroundColor(.white)
                     Spacer()
-                    Toggle("", isOn: $form.familyHistory)
+                    Toggle("", isOn: $viewModel.form.familyHistory)
                         .labelsHidden()
+                        .accessibilityLabel("Family history of lung cancer")
                 }
                 .padding()
 
@@ -209,8 +203,9 @@ struct BrockView: View {
                     Text("Emphysema")
                         .foregroundColor(.white)
                     Spacer()
-                    Toggle("", isOn: $form.emphysema)
+                    Toggle("", isOn: $viewModel.form.emphysema)
                         .labelsHidden()
+                        .accessibilityLabel("Emphysema")
                 }
                 .padding()
             }
@@ -229,7 +224,7 @@ struct BrockView: View {
                 .padding(.bottom, 8)
 
             VStack(alignment: .leading, spacing: 8) {
-                if let result = brockResult {
+                if let result = viewModel.result {
                     Text(String(format: "Estimated malignancy risk: %.1f%%", result.malignancyProbability))
                         .foregroundColor(.white)
                     Text(result.riskCategory.rawValue)
@@ -239,7 +234,7 @@ struct BrockView: View {
                     Text(result.interpretation)
                         .font(.footnote)
                         .foregroundColor(.gray)
-                } else if let validationError = brockValidationError {
+                } else if let validationError = viewModel.validationError {
                     Text(validationError)
                         .foregroundColor(.gray)
                 } else {
@@ -251,59 +246,33 @@ struct BrockView: View {
             .padding()
             .cardStyle(cornerRadius: 12)
             .padding(.horizontal)
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel(resultAccessibilityLabel)
         }
+    }
+
+    private var resultAccessibilityLabel: String {
+        if let result = viewModel.result {
+            return String(
+                format: "Brock result. Estimated malignancy risk: %.1f%%. %@. %@",
+                result.malignancyProbability,
+                result.riskCategory.rawValue,
+                result.interpretation
+            )
+        }
+        if let validationError = viewModel.validationError {
+            return "Brock result. \(validationError)"
+        }
+        return "Brock result. Enter all required fields."
     }
 
     private var referenceButton: some View {
-        Button(action: { selectedReference = .brockSource }) {
-            Text("Reference")
-                .foregroundColor(blueAccent)
-        }
-        .padding(.top, 8)
-    }
-
-    private var brockResult: BrockResult? {
-        guard let input = brockInput else { return nil }
-        return BrockCalculator.calculate(input: input)
-    }
-
-    private var brockValidationError: String? {
-        guard let input = brockInput else { return nil }
-        return BrockCalculator.validate(input: input)?.message
-    }
-
-    private var brockInput: BrockInput? {
-        guard let ageValue = parseInt(form.age) else { return nil }
-        guard let sizeValue = parseDouble(form.noduleSize) else { return nil }
-        guard let countValue = parseInt(form.noduleCount) else { return nil }
-
-        return BrockInput(
-            age: ageValue,
-            isFemale: form.gender == 1,
-            noduleSizeMm: sizeValue,
-            noduleType: noduleType,
-            upperLobe: form.upperLobe,
-            noduleCount: countValue,
-            spiculation: form.spiculation,
-            familyHistory: form.familyHistory,
-            emphysema: form.emphysema
+        ReferenceButton(
+            reference: .brockSource,
+            accentColor: blueAccent,
+            topPadding: 8,
+            bottomPadding: 0
         )
     }
 
-    private var noduleType: BrockNoduleType {
-        let types = BrockNoduleType.allCases
-        guard types.indices.contains(form.noduleMorphology) else { return .solid }
-        return types[form.noduleMorphology]
-    }
-
-    private func parseDouble(_ text: String) -> Double? {
-        let normalized = text.trimmingCharacters(in: .whitespacesAndNewlines)
-            .replacingOccurrences(of: ",", with: ".")
-        return Double(normalized)
-    }
-
-    private func parseInt(_ text: String) -> Int? {
-        let normalized = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        return Int(normalized)
-    }
 }
