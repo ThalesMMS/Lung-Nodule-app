@@ -4,34 +4,51 @@ import SwiftUI
 
 extension Color {
     /// Primary accent for the Fleischner 2017 calculator.
-    static let fleischnerAccent = Color(red: 0.20, green: 0.78, blue: 0.35)
+    static let fleischnerAccent = Color(red: 0.24, green: 0.80, blue: 0.42)
     /// Primary accent for the Lung-RADS v2022 calculator.
-    static let lungRADSAccent = Color(red: 0.04, green: 0.52, blue: 1.0)
+    static let lungRADSAccent = Color(red: 0.18, green: 0.56, blue: 1.0)
 
     /// Shared urgency scale used by both calculators' result cards.
-    static let severityMinimal = Color(red: 0.20, green: 0.78, blue: 0.35)
-    static let severityModerate = Color(red: 0.97, green: 0.78, blue: 0.18)
-    static let severityElevated = Color(red: 0.98, green: 0.56, blue: 0.16)
-    static let severityHigh = Color(red: 0.95, green: 0.27, blue: 0.31)
-    static let severityNeutral = Color(red: 0.55, green: 0.58, blue: 0.63)
+    static let severityMinimal = Color(red: 0.24, green: 0.80, blue: 0.42)
+    static let severityModerate = Color(red: 0.97, green: 0.76, blue: 0.22)
+    static let severityElevated = Color(red: 0.98, green: 0.55, blue: 0.18)
+    static let severityHigh = Color(red: 0.95, green: 0.30, blue: 0.34)
+    static let severityNeutral = Color(red: 0.58, green: 0.61, blue: 0.66)
 
-    static let appBackdropTop = Color(red: 0.055, green: 0.063, blue: 0.078)
-    static let appBackdropBottom = Color.black
-    static let cardFillTop = Color(white: 0.145)
-    static let cardFillBottom = Color(white: 0.10)
-    static let cardStroke = Color.white.opacity(0.08)
-    static let subtleDivider = Color.white.opacity(0.08)
+    static let appBackdropTop = Color(red: 0.055, green: 0.070, blue: 0.090)
+    static let appBackdropBottom = Color(red: 0.016, green: 0.020, blue: 0.028)
+    static let cardFillTop = Color(red: 0.110, green: 0.125, blue: 0.145)
+    static let cardFillBottom = Color(red: 0.082, green: 0.092, blue: 0.108)
+    static let rowFill = Color(red: 0.100, green: 0.113, blue: 0.132)
+    static let cardStroke = Color.white.opacity(0.09)
+    static let subtleDivider = Color.white.opacity(0.07)
 }
 
 // MARK: - App background
 
 struct AppBackdrop: View {
     var body: some View {
-        LinearGradient(
-            colors: [.appBackdropTop, .appBackdropBottom],
-            startPoint: .top,
-            endPoint: .bottom
-        )
+        ZStack {
+            LinearGradient(
+                colors: [.appBackdropTop, .appBackdropBottom],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+
+            RadialGradient(
+                colors: [Color.fleischnerAccent.opacity(0.08), .clear],
+                center: .init(x: 0.15, y: -0.05),
+                startRadius: 0,
+                endRadius: 420
+            )
+
+            RadialGradient(
+                colors: [Color.lungRADSAccent.opacity(0.07), .clear],
+                center: .init(x: 1.05, y: 0.35),
+                startRadius: 0,
+                endRadius: 380
+            )
+        }
         .ignoresSafeArea()
     }
 }
@@ -39,7 +56,7 @@ struct AppBackdrop: View {
 // MARK: - Card surface
 
 struct CardStyle: ViewModifier {
-    var cornerRadius: CGFloat = 16
+    var cornerRadius: CGFloat = 20
     var shadow: Bool = true
 
     func body(content: Content) -> some View {
@@ -56,85 +73,24 @@ struct CardStyle: ViewModifier {
             )
             .overlay(
                 RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                    .strokeBorder(Color.cardStroke, lineWidth: 1)
+                    .strokeBorder(
+                        LinearGradient(
+                            colors: [.white.opacity(0.13), .white.opacity(0.04)],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        ),
+                        lineWidth: 1
+                    )
             )
             .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
-            .shadow(color: .black.opacity(shadow ? 0.30 : 0), radius: 14, x: 0, y: 7)
+            .shadow(color: .black.opacity(shadow ? 0.35 : 0), radius: 16, x: 0, y: 8)
     }
 }
 
 extension View {
     /// Applies the app's standard elevated dark-card surface.
-    func cardStyle(cornerRadius: CGFloat = 16, shadow: Bool = true) -> some View {
+    func cardStyle(cornerRadius: CGFloat = 20, shadow: Bool = true) -> some View {
         modifier(CardStyle(cornerRadius: cornerRadius, shadow: shadow))
-    }
-}
-
-// MARK: - Value chip (trailing content on settings rows)
-
-struct ValueChip<Content: View>: View {
-    var accentColor: Color
-    @ViewBuilder var content: () -> Content
-
-    var body: some View {
-        HStack(spacing: 4) {
-            content()
-        }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 6)
-        .background(accentColor.opacity(0.12), in: Capsule())
-    }
-}
-
-// MARK: - Pill button (secondary actions inside result cards)
-
-struct PillButton: View {
-    let title: String
-    let icon: String
-    let accentColor: Color
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            Label(title, systemImage: icon)
-                .font(.subheadline.weight(.semibold))
-                .foregroundColor(accentColor)
-                .padding(.horizontal, 14)
-                .padding(.vertical, 10)
-                .background(accentColor.opacity(0.14), in: Capsule())
-                .overlay(Capsule().strokeBorder(accentColor.opacity(0.35), lineWidth: 1))
-        }
-    }
-}
-
-// MARK: - Severity indicator bar
-
-struct SeverityBar: View {
-    var color: Color
-    var height: CGFloat = 5
-    var maxWidth: CGFloat = 130
-
-    var body: some View {
-        Capsule()
-            .fill(color.gradient)
-            .frame(height: height)
-            .frame(maxWidth: maxWidth)
-    }
-}
-
-// MARK: - Section header (small caps label used above grouped cards)
-
-struct SectionLabel: View {
-    let title: String
-
-    var body: some View {
-        Text(title)
-            .font(.caption)
-            .fontWeight(.semibold)
-            .tracking(0.4)
-            .foregroundColor(.white.opacity(0.5))
-            .padding(.horizontal)
-            .padding(.bottom, 8)
     }
 }
 
@@ -149,6 +105,24 @@ extension LungRADSCategory {
         case .cat4A: return .severityElevated
         case .cat4B, .cat4X: return .severityHigh
         case .s: return .severityNeutral
+        }
+    }
+
+    /// Legible text color for content drawn on top of `severityColor`.
+    var onSeverityColor: Color {
+        switch self {
+        case .cat4B, .cat4X: return .white
+        default: return .black.opacity(0.82)
+        }
+    }
+}
+
+extension BrockRiskCategory {
+    var severityColor: Color {
+        switch self {
+        case .low: return .severityMinimal
+        case .intermediate: return .severityModerate
+        case .high: return .severityHigh
         }
     }
 }

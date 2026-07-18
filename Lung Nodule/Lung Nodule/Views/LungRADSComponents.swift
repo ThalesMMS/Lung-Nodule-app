@@ -6,38 +6,74 @@ struct LungRADSResultCard: View {
     let blueAccent: Color
     let onSModifierTap: () -> Void
     let onBrockTap: (() -> Void)?
-    @ScaledMetric(relativeTo: .largeTitle) var categoryFontSize = 84
+    var onReset: (() -> Void)? = nil
+    @ScaledMetric(relativeTo: .largeTitle) var categoryFontSize = 64
 
     var severityColor: Color { result.category.severityColor }
 
     var body: some View {
-        VStack(spacing: 14) {
-            Text(managementText)
+        VStack(spacing: 16) {
+            Text("ACR Lung-RADS v2022")
                 .font(.caption.weight(.semibold))
-                .tracking(0.5)
+                .tracking(1.2)
                 .textCase(.uppercase)
-                .foregroundColor(.white.opacity(0.55))
+                .foregroundColor(.white.opacity(0.5))
 
-            Text(categoryDisplay)
-                .font(.system(size: categoryFontSize, weight: .bold, design: .rounded))
-                .foregroundStyle(severityColor)
-                .lineLimit(1)
-                .minimumScaleFactor(0.4)
+            ZStack {
+                Circle()
+                    .fill(severityColor)
+                    .frame(width: 110, height: 110)
+                    .blur(radius: 55)
+                    .opacity(0.30)
+
+                Text(categoryDisplay)
+                    .font(.system(size: categoryFontSize, weight: .bold, design: .rounded))
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [severityColor, severityColor.opacity(0.75)],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    )
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.4)
+            }
+            .frame(height: 76)
 
             Text(result.category.description)
                 .font(.headline)
-                .foregroundColor(severityColor)
+                .foregroundColor(.white)
                 .multilineTextAlignment(.center)
 
-            SeverityBar(color: severityColor)
+            categoryScale
 
             if let notes = result.additionalNotes, !notes.isEmpty {
                 Text(notes)
                     .font(.footnote)
-                    .foregroundColor(.white.opacity(0.55))
+                    .foregroundColor(.white.opacity(0.62))
                     .multilineTextAlignment(.center)
-                    .padding(.top, 4)
             }
+
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Management")
+                    .font(.caption2.weight(.semibold))
+                    .tracking(1.1)
+                    .textCase(.uppercase)
+                    .foregroundColor(.white.opacity(0.42))
+                Text(result.management)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundColor(.white)
+                Text("Estimated risk of malignancy: \(result.probabilityOfMalignancy)")
+                    .font(.caption.weight(.semibold))
+                    .foregroundColor(severityColor)
+                    .padding(.top, 2)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(14)
+            .background(
+                Color.white.opacity(0.05),
+                in: RoundedRectangle(cornerRadius: 14, style: .continuous)
+            )
 
             VStack(spacing: 10) {
                 if let onBrockTap {
@@ -56,28 +92,52 @@ struct LungRADSResultCard: View {
                     action: onSModifierTap
                 )
             }
-            .padding(.top, 8)
         }
         .padding(20)
+        .frame(maxWidth: .infinity)
+        .overlay(alignment: .topTrailing) {
+            if let onReset {
+                ResetButton(accentColor: blueAccent, action: onReset)
+                    .padding(12)
+            }
+        }
         .cardStyle()
         .padding(.horizontal, 16)
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Lung-RADS result, category \(categoryDisplay)")
     }
 
-    var managementText: String {
-        if result.management.contains("12 months") || result.management.contains("annual") {
-            return "12mo LDCT"
-        } else if result.management.contains("6-month") || result.management.contains("6 months") {
-            return "6mo LDCT"
-        } else if result.management.contains("3-month") || result.management.contains("3 months") {
-            return "3mo LDCT"
-        } else if result.management.contains("PET/CT") || result.management.contains("tissue sampling") {
-            return "Further Workup"
-        } else if result.management.contains("Comparison") || result.management.contains("Additional imaging") {
-            return "Prior CT Needed"
+    private var categoryScale: some View {
+        let scaleCategories: [LungRADSCategory] = [.cat1, .cat2, .cat3, .cat4A, .cat4B, .cat4X]
+
+        return Group {
+            if scaleCategories.contains(result.category) {
+                HStack(spacing: 5) {
+                    ForEach(scaleCategories, id: \.self) { category in
+                        let isActive = category == result.category
+                        Text(category.rawValue)
+                            .font(.caption.weight(.bold))
+                            .foregroundColor(
+                                isActive
+                                    ? category.onSeverityColor
+                                    : .white.opacity(0.40)
+                            )
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 6)
+                            .background(
+                                isActive
+                                    ? AnyShapeStyle(category.severityColor.gradient)
+                                    : AnyShapeStyle(Color.white.opacity(0.06)),
+                                in: Capsule()
+                            )
+                    }
+                }
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("Lung-RADS scale, current category \(result.category.rawValue)")
+            } else {
+                SeverityBar(color: severityColor)
+            }
         }
-        return "LDCT"
     }
 
     var categoryDisplay: String {

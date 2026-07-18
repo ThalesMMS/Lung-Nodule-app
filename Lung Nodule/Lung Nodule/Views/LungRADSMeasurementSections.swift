@@ -295,15 +295,19 @@ extension LungRADSView {
                             .accessibilityLabel("Current date")
                     }
                 )
-
-                if let summary = viewModel.growthSummary {
-                    Text(summary)
-                        .font(.footnote)
-                        .foregroundColor(.gray)
-                        .multilineTextAlignment(.leading)
-                        .padding(.horizontal, 20)
-                }
             }
+        }
+    }
+
+    @ViewBuilder
+    var growthSummaryNote: some View {
+        if viewModel.useGrowthCalculator, let summary = viewModel.growthSummary {
+            Text(summary)
+                .font(.footnote)
+                .foregroundColor(.white.opacity(0.55))
+                .multilineTextAlignment(.leading)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 24)
         }
     }
 

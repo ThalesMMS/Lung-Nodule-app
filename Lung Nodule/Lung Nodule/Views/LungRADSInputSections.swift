@@ -60,18 +60,11 @@ extension LungRADSView {
     @ViewBuilder
     var eligibilityNotice: some View {
         if let notice = viewModel.eligibilityNotice {
-            HStack(alignment: .top, spacing: 10) {
-                Image(systemName: "exclamationmark.triangle.fill")
-                    .foregroundColor(.orange)
-                Text(notice)
-                    .font(.footnote)
-                    .foregroundColor(.orange)
-                    .multilineTextAlignment(.leading)
-            }
-            .padding()
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .cardStyle(cornerRadius: 12)
-            .padding(.horizontal, 16)
+            InfoBanner(
+                text: notice,
+                icon: "exclamationmark.triangle.fill",
+                tint: .orange
+            )
         }
     }
 
@@ -135,25 +128,29 @@ extension LungRADSView {
     }
 
     // MARK: - Benign Features Group
+    @ViewBuilder
     var benignFeaturesGroup: some View {
-        GroupedToggleCard(rows: [
-            GroupedToggleRow(
-                id: "benign.calcification",
-                title: "Benign Calcification Pattern",
-                isOn: $viewModel.input.hasBenignCalcification,
-                info: GroupedToggleInfo(
-                    accentColor: blueAccent,
-                    accessibilityLabel: "Information about benign calcification pattern",
-                    accessibilityHint: "Shows accepted benign calcification patterns.",
-                    action: { showCalcificationInfo = true }
-                )
-            ),
-            GroupedToggleRow(
-                id: "benign.macroscopic-fat",
-                title: "Macroscopic Fat in Nodule",
-                isOn: $viewModel.input.hasMacroscopicFat
-            )
-        ])
+        SettingsRow(
+            title: "Benign Calcification Pattern",
+            hasInfo: true,
+            accentColor: blueAccent,
+            onInfoTap: { showCalcificationInfo = true },
+            trailing: {
+                Toggle("", isOn: $viewModel.input.hasBenignCalcification)
+                    .labelsHidden()
+                    .accessibilityLabel("Benign Calcification Pattern")
+            }
+        )
+
+        SettingsRow(
+            title: "Macroscopic Fat in Nodule",
+            accentColor: blueAccent,
+            trailing: {
+                Toggle("", isOn: $viewModel.input.hasMacroscopicFat)
+                    .labelsHidden()
+                    .accessibilityLabel("Macroscopic Fat in Nodule")
+            }
+        )
     }
 
     // MARK: - Multiple Nodules Row

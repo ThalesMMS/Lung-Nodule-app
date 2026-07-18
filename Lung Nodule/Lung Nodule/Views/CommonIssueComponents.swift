@@ -11,9 +11,15 @@ struct DetailSection<Content: View>: View {
             SectionLabel(title: title)
 
             content()
-                .cardStyle(cornerRadius: 12)
-                .padding(.horizontal)
+                .background(Color.rowFill)
+                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .strokeBorder(Color.cardStroke, lineWidth: 1)
+                )
+                .shadow(color: .black.opacity(0.25), radius: 12, x: 0, y: 6)
         }
+        .padding(.horizontal)
     }
 }
 
@@ -22,15 +28,17 @@ struct DetailItem: View {
     let description: String
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: 5) {
             Text(title)
-                .font(.headline)
+                .font(.subheadline.weight(.semibold))
                 .foregroundColor(.white)
             Text(description)
-                .font(.subheadline)
-                .foregroundColor(.white.opacity(0.55))
+                .font(.footnote)
+                .foregroundColor(.white.opacity(0.60))
         }
-        .padding()
+        .padding(.horizontal, 16)
+        .padding(.vertical, 13)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .accessibilityElement(children: .combine)
     }
 }

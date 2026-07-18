@@ -13,23 +13,20 @@ struct BrockView: View {
 
     var body: some View {
         AdaptiveCalculatorGrid {
-            VStack(spacing: 16) {
-                Text(MedicalCopy.brockModelDescription)
-                    .font(.subheadline)
-                    .foregroundColor(.white)
-                    .multilineTextAlignment(.center)
-                    .padding()
-                    .frame(maxWidth: .infinity)
-                    .cardStyle(cornerRadius: 12)
-                    .padding(.horizontal, 16)
+            VStack(spacing: 18) {
+                resultSection
 
-                patientSection
+                InfoBanner(
+                    text: MedicalCopy.brockModelDescription,
+                    icon: "waveform.path.ecg",
+                    tint: blueAccent
+                )
             }
 
-            VStack(spacing: 16) {
+            VStack(spacing: 18) {
+                patientSection
                 noduleSection
                 riskFactorsSection
-                resultSection
                 referenceButton
             }
         }
@@ -45,210 +42,208 @@ struct BrockView: View {
     }
 
     private var patientSection: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Text("PATIENT")
-                .font(.caption)
-                .fontWeight(.semibold)
-                .foregroundColor(.gray)
-                .padding(.horizontal)
-                .padding(.bottom, 8)
-
-            VStack(spacing: 0) {
-                HStack {
-                    Text("Age (>= 18 yrs)")
-                        .foregroundColor(.white)
-                    Spacer()
-                    TextField("", text: $viewModel.form.age)
-                        .keyboardType(.numberPad)
-                        .multilineTextAlignment(.trailing)
-                        .foregroundColor(.gray)
-                        .frame(minWidth: 50, idealWidth: 60, maxWidth: 90)
-                        .focused($focusedField, equals: .age)
-                    Text("yrs")
-                        .foregroundColor(.gray)
-                }
-                .padding()
-
-                Divider().background(Color.subtleDivider)
-
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Gender")
-                        .foregroundColor(.gray)
-                        .font(.caption)
-
-                    Picker("Gender", selection: $viewModel.form.gender) {
-                        ForEach(BrockGender.allCases) { gender in
-                            Text(gender.rawValue).tag(gender)
-                        }
+        SettingsSection(title: "Patient") {
+            SettingsRow(
+                title: "Age (>= 18 yrs)",
+                accentColor: blueAccent,
+                trailing: {
+                    ValueChip(accentColor: blueAccent) {
+                        TextField("0", text: $viewModel.form.age)
+                            .keyboardType(.numberPad)
+                            .multilineTextAlignment(.trailing)
+                            .foregroundColor(blueAccent)
+                            .frame(minWidth: 50, idealWidth: 60, maxWidth: 90)
+                            .focused($focusedField, equals: .age)
+                        Text("yrs")
+                            .foregroundColor(.gray)
                     }
-                    .pickerStyle(.segmented)
-                    .tint(blueAccent)
                 }
-                .padding()
+            )
+
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Gender")
+                    .font(.subheadline)
+                    .foregroundColor(.white.opacity(0.92))
+
+                Picker("Gender", selection: $viewModel.form.gender) {
+                    ForEach(BrockGender.allCases) { gender in
+                        Text(gender.rawValue).tag(gender)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .tint(blueAccent)
             }
-            .cardStyle(cornerRadius: 12)
-            .padding(.horizontal)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .frame(maxWidth: .infinity)
+            .background(Color.rowFill)
         }
     }
 
     private var noduleSection: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Text("NODULE")
-                .font(.caption)
-                .fontWeight(.semibold)
-                .foregroundColor(.gray)
-                .padding(.horizontal)
-                .padding(.bottom, 8)
-
-            VStack(spacing: 0) {
-                HStack {
-                    Text("Size (3-30 mm)")
-                        .foregroundColor(.white)
-                    Spacer()
-                    TextField("", text: $viewModel.form.noduleSize)
-                        .keyboardType(.decimalPad)
-                        .multilineTextAlignment(.trailing)
-                        .foregroundColor(.gray)
-                        .frame(minWidth: 50, idealWidth: 60, maxWidth: 90)
-                        .focused($focusedField, equals: .size)
-                    Text("mm")
-                        .foregroundColor(.gray)
-                }
-                .padding()
-
-                Divider().background(Color.subtleDivider)
-
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Nodule morphology")
-                        .foregroundColor(.gray)
-                        .font(.caption)
-
-                    Picker("Morphology", selection: $viewModel.form.noduleMorphology) {
-                        ForEach(BrockNoduleType.allCases) { type in
-                            Text(type.rawValue).tag(type)
-                        }
+        SettingsSection(title: "Nodule") {
+            SettingsRow(
+                title: "Size (3-30 mm)",
+                accentColor: blueAccent,
+                trailing: {
+                    ValueChip(accentColor: blueAccent) {
+                        TextField("0", text: $viewModel.form.noduleSize)
+                            .keyboardType(.decimalPad)
+                            .multilineTextAlignment(.trailing)
+                            .foregroundColor(blueAccent)
+                            .frame(minWidth: 50, idealWidth: 60, maxWidth: 90)
+                            .focused($focusedField, equals: .size)
+                        Text("mm")
+                            .foregroundColor(.gray)
                     }
-                    .pickerStyle(.segmented)
-                    .tint(blueAccent)
                 }
-                .padding()
+            )
 
-                Divider().background(Color.subtleDivider)
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Nodule morphology")
+                    .font(.subheadline)
+                    .foregroundColor(.white.opacity(0.92))
 
-                HStack {
-                    Text("Upper lobe")
-                        .foregroundColor(.white)
-                    Spacer()
+                Picker("Morphology", selection: $viewModel.form.noduleMorphology) {
+                    ForEach(BrockNoduleType.allCases) { type in
+                        Text(type.rawValue).tag(type)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .tint(blueAccent)
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .frame(maxWidth: .infinity)
+            .background(Color.rowFill)
+
+            SettingsRow(
+                title: "Upper lobe",
+                accentColor: blueAccent,
+                trailing: {
                     Toggle("", isOn: $viewModel.form.upperLobe)
                         .labelsHidden()
                         .accessibilityLabel("Upper lobe")
                 }
-                .padding()
+            )
 
-                Divider().background(Color.subtleDivider)
-
-                HStack {
-                    Text("Nodule count (>= 1), no decimal")
-                        .foregroundColor(.white)
-                    Spacer()
-                    TextField("0", text: $viewModel.form.noduleCount)
-                        .keyboardType(.numberPad)
-                        .multilineTextAlignment(.trailing)
-                        .foregroundColor(.gray)
-                        .frame(minWidth: 44, idealWidth: 50, maxWidth: 70)
-                        .focused($focusedField, equals: .count)
+            SettingsRow(
+                title: "Nodule count (>= 1), no decimal",
+                accentColor: blueAccent,
+                trailing: {
+                    ValueChip(accentColor: blueAccent) {
+                        TextField("0", text: $viewModel.form.noduleCount)
+                            .keyboardType(.numberPad)
+                            .multilineTextAlignment(.trailing)
+                            .foregroundColor(blueAccent)
+                            .frame(minWidth: 44, idealWidth: 50, maxWidth: 70)
+                            .focused($focusedField, equals: .count)
+                    }
                 }
-                .padding()
+            )
 
-                Divider().background(Color.subtleDivider)
-
-                HStack {
-                    Text("Spiculation")
-                        .foregroundColor(.white)
-                    Spacer()
+            SettingsRow(
+                title: "Spiculation",
+                accentColor: blueAccent,
+                trailing: {
                     Toggle("", isOn: $viewModel.form.spiculation)
                         .labelsHidden()
                         .accessibilityLabel("Spiculation")
                 }
-                .padding()
-            }
-            .cardStyle(cornerRadius: 12)
-            .padding(.horizontal)
+            )
         }
     }
 
     private var riskFactorsSection: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Text("OTHER RISK FACTORS")
-                .font(.caption)
-                .fontWeight(.semibold)
-                .foregroundColor(.gray)
-                .padding(.horizontal)
-                .padding(.bottom, 8)
-
-            VStack(spacing: 0) {
-                HStack {
-                    Text("Family history of lung cancer")
-                        .foregroundColor(.white)
-                    Spacer()
+        SettingsSection(title: "Other Risk Factors") {
+            SettingsRow(
+                title: "Family history of lung cancer",
+                accentColor: blueAccent,
+                trailing: {
                     Toggle("", isOn: $viewModel.form.familyHistory)
                         .labelsHidden()
                         .accessibilityLabel("Family history of lung cancer")
                 }
-                .padding()
+            )
 
-                Divider().background(Color.subtleDivider)
-
-                HStack {
-                    Text("Emphysema")
-                        .foregroundColor(.white)
-                    Spacer()
+            SettingsRow(
+                title: "Emphysema",
+                accentColor: blueAccent,
+                trailing: {
                     Toggle("", isOn: $viewModel.form.emphysema)
                         .labelsHidden()
                         .accessibilityLabel("Emphysema")
                 }
-                .padding()
-            }
-            .cardStyle(cornerRadius: 12)
-            .padding(.horizontal)
+            )
         }
     }
 
     private var resultSection: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Text("RESULT")
-                .font(.caption)
-                .fontWeight(.semibold)
-                .foregroundColor(.gray)
-                .padding(.horizontal)
-                .padding(.bottom, 8)
+        VStack(spacing: 16) {
+            Text("Brock Malignancy Risk")
+                .font(.caption.weight(.semibold))
+                .tracking(1.2)
+                .textCase(.uppercase)
+                .foregroundColor(.white.opacity(0.5))
 
-            VStack(alignment: .leading, spacing: 8) {
-                if let result = viewModel.result {
-                    Text(String(format: "Estimated malignancy risk: %.1f%%", result.malignancyProbability))
-                        .foregroundColor(.white)
-                    Text(result.riskCategory.rawValue)
-                        .font(.footnote)
-                        .fontWeight(.semibold)
-                        .foregroundColor(blueAccent)
-                    Text(result.interpretation)
-                        .font(.footnote)
-                        .foregroundColor(.gray)
-                } else if let validationError = viewModel.validationError {
-                    Text(validationError)
-                        .foregroundColor(.gray)
-                } else {
-                    Text("Enter all required fields.")
-                        .foregroundColor(.gray)
+            if let result = viewModel.result {
+                let severityColor = result.riskCategory.severityColor
+
+                ZStack {
+                    Circle()
+                        .fill(severityColor)
+                        .frame(width: 110, height: 110)
+                        .blur(radius: 55)
+                        .opacity(0.30)
+
+                    Text(String(format: "%.1f%%", result.malignancyProbability))
+                        .font(.system(size: 54, weight: .bold, design: .rounded))
+                        .monospacedDigit()
+                        .foregroundStyle(
+                            LinearGradient(
+                                colors: [severityColor, severityColor.opacity(0.75)],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        )
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.5)
                 }
+                .frame(height: 68)
+
+                Text("\(result.riskCategory.rawValue) risk of malignancy")
+                    .font(.headline)
+                    .foregroundColor(.white)
+                    .multilineTextAlignment(.center)
+
+                SeverityBar(color: severityColor)
+
+                Text(result.interpretation)
+                    .font(.footnote)
+                    .foregroundColor(.white.opacity(0.62))
+                    .multilineTextAlignment(.center)
+            } else {
+                Image(systemName: "percent")
+                    .font(.system(size: 30, weight: .semibold))
+                    .foregroundColor(.severityNeutral)
+                    .frame(width: 68, height: 68)
+                    .background(Color.severityNeutral.opacity(0.13), in: Circle())
+                    .overlay(Circle().strokeBorder(Color.severityNeutral.opacity(0.30), lineWidth: 1))
+
+                Text(viewModel.validationError ?? "Enter all required fields.")
+                    .font(.subheadline)
+                    .foregroundColor(.white.opacity(0.62))
+                    .multilineTextAlignment(.center)
+
+                SeverityBar(color: .severityNeutral)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding()
-            .cardStyle(cornerRadius: 12)
-            .padding(.horizontal)
-            .accessibilityElement(children: .combine)
-            .accessibilityLabel(resultAccessibilityLabel)
         }
+        .padding(20)
+        .frame(maxWidth: .infinity)
+        .cardStyle()
+        .padding(.horizontal, 16)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(resultAccessibilityLabel)
     }
 
     private var resultAccessibilityLabel: String {

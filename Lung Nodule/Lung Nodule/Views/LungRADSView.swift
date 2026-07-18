@@ -56,7 +56,7 @@ struct LungRADSView: View {
         AdaptiveCalculatorGrid {
             resultCardSection
 
-            VStack(spacing: 16) {
+            VStack(spacing: 18) {
                 inputFieldsSection
                 referenceButton
             }
@@ -64,7 +64,7 @@ struct LungRADSView: View {
         .padding(.horizontal, 8)
         .tint(blueAccent)
     }
-    
+
     // MARK: - Result Card Section
     @ViewBuilder
     var resultCardSection: some View {
@@ -78,30 +78,56 @@ struct LungRADSView: View {
                 result: result,
                 blueAccent: blueAccent,
                 onSModifierTap: { showSModifierConsiderations.toggle() },
-                onBrockTap: brockAction
+                onBrockTap: brockAction,
+                onReset: {
+                    viewModel.reset()
+                    viewModel.calculate()
+                }
             )
         }
     }
-    
+
     // MARK: - Input Fields Section
     @ViewBuilder
     var inputFieldsSection: some View {
-        eligibilitySection
+        SettingsSection(title: "Patient") {
+            eligibilitySection
+        }
+
         eligibilityNotice
-        ctStatusRow
-        morphologyRow
-        juxtapleuralMorphologyRow
-        benignFeaturesGroup
-        multipleNodulesRow
-        inflammatoryFindingsRow
-        atelectasisRow
-        sizeRow
-        volumeMeasurementSection
-        axisMeasurementSection
-        solidComponentRow
-        noduleStatusRow
-        growthCalculatorSection
-        suspiciousFeaturesRow
+
+        SettingsSection(title: "Exam") {
+            ctStatusRow
+        }
+
+        SettingsSection(title: "Nodule") {
+            morphologyRow
+            juxtapleuralMorphologyRow
+            benignFeaturesGroup
+            multipleNodulesRow
+            inflammatoryFindingsRow
+            atelectasisRow
+        }
+
+        SettingsSection(title: "Measurements") {
+            sizeRow
+            volumeMeasurementSection
+            axisMeasurementSection
+            solidComponentRow
+        }
+
+        if viewModel.input.ctStatus == .followUp {
+            SettingsSection(title: "Comparison with Prior") {
+                noduleStatusRow
+                growthCalculatorSection
+            }
+
+            growthSummaryNote
+        }
+
+        SettingsSection(title: "Risk Features") {
+            suspiciousFeaturesRow
+        }
     }
 
 }

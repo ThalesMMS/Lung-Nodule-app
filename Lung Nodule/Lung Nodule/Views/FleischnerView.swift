@@ -23,64 +23,67 @@ struct FleischnerView: View {
         AdaptiveCalculatorGrid {
             resultCard
 
-            VStack(spacing: 16) {
-                morphologyRow
-                sizeSection
+            VStack(spacing: 18) {
+                SettingsSection(title: "Nodule") {
+                    morphologyRow
+                    sizeSection
 
-                SettingsRow(
-                    title: "High Risk Patient",
-                    hasInfo: true,
-                    onInfoTap: { showRiskInfo = true },
-                    trailing: {
-                        Toggle("", isOn: Binding(
-                            get: { viewModel.input.risk == .high },
-                            set: { isHighRisk in
-                                viewModel.input.risk = isHighRisk ? .high : .low
-                                if !isHighRisk {
-                                    highRiskSmokingHistory = false
-                                    highRiskExposure = false
-                                    highRiskFamilyHistory = false
+                    if viewModel.input.noduleType == .partSolid {
+                        SettingsRow(
+                            title: "Solid Component",
+                            hasInfo: true,
+                            onInfoTap: { showSolidComponentInfo = true },
+                            trailing: {
+                                ValueChip(accentColor: .fleischnerAccent) {
+                                    TextField("0", text: $viewModel.solidComponentText)
+                                        .keyboardType(.decimalPad)
+                                        .multilineTextAlignment(.trailing)
+                                        .foregroundColor(Color.fleischnerAccent)
+                                        .frame(minWidth: 60, idealWidth: 70, maxWidth: 100)
+                                        .focused($focusedField, equals: .solidComponent)
+                                    Text("mm")
+                                        .foregroundColor(.gray)
                                 }
                             }
-                        ))
-                        .labelsHidden()
-                        .accessibilityLabel("High Risk Patient")
+                        )
                     }
-                )
+                }
 
-                if viewModel.input.noduleType == .partSolid {
+                roundingNote
+
+                SettingsSection(title: "Patient & Context") {
                     SettingsRow(
-                        title: "Solid Component",
+                        title: "High Risk Patient",
                         hasInfo: true,
-                        onInfoTap: { showSolidComponentInfo = true },
+                        onInfoTap: { showRiskInfo = true },
                         trailing: {
-                            HStack(spacing: 6) {
-                                TextField("0", text: $viewModel.solidComponentText)
-                                    .keyboardType(.decimalPad)
-                                    .multilineTextAlignment(.trailing)
-                                    .foregroundColor(Color.fleischnerAccent)
-                                    .frame(minWidth: 60, idealWidth: 70, maxWidth: 100)
-                                    .focused($focusedField, equals: .solidComponent)
-                                Text("mm")
-                                    .foregroundColor(.gray)
-                            }
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 6)
-                            .background(Color.fleischnerAccent.opacity(0.12), in: Capsule())
+                            Toggle("", isOn: Binding(
+                                get: { viewModel.input.risk == .high },
+                                set: { isHighRisk in
+                                    viewModel.input.risk = isHighRisk ? .high : .low
+                                    if !isHighRisk {
+                                        highRiskSmokingHistory = false
+                                        highRiskExposure = false
+                                        highRiskFamilyHistory = false
+                                    }
+                                }
+                            ))
+                            .labelsHidden()
+                            .accessibilityLabel("High Risk Patient")
+                        }
+                    )
+
+                    SettingsRow(
+                        title: "Multiple",
+                        hasInfo: true,
+                        onInfoTap: { showMultipleInfo = true },
+                        trailing: {
+                            Toggle("", isOn: $viewModel.input.isMultiple)
+                                .labelsHidden()
+                                .accessibilityLabel("Multiple Nodules")
                         }
                     )
                 }
-
-                SettingsRow(
-                    title: "Multiple",
-                    hasInfo: true,
-                    onInfoTap: { showMultipleInfo = true },
-                    trailing: {
-                        Toggle("", isOn: $viewModel.input.isMultiple)
-                            .labelsHidden()
-                            .accessibilityLabel("Multiple Nodules")
-                    }
-                )
 
                 ReferenceButton(
                     reference: .fleischnerGuideline,
@@ -151,32 +154,56 @@ struct FleischnerView: View {
         if let result = viewModel.result {
             let severityColor = FleischnerSeverity.color(for: result.recommendation)
 
-            VStack(spacing: 14) {
-                HStack(alignment: .top, spacing: 12) {
+            VStack(spacing: 16) {
+                Text("Fleischner 2017")
+                    .font(.caption.weight(.semibold))
+                    .tracking(1.2)
+                    .textCase(.uppercase)
+                    .foregroundColor(.white.opacity(0.5))
+
+                ZStack {
+                    Circle()
+                        .fill(severityColor)
+                        .frame(width: 90, height: 90)
+                        .blur(radius: 45)
+                        .opacity(0.28)
+
                     Image(systemName: FleischnerSeverity.icon(for: result.recommendation))
-                        .font(.title3.weight(.semibold))
+                        .font(.system(size: 30, weight: .semibold))
                         .foregroundColor(severityColor)
-                        .frame(width: 44, height: 44)
-                        .background(severityColor.opacity(0.15), in: Circle())
+                        .frame(width: 68, height: 68)
+                        .background(severityColor.opacity(0.13), in: Circle())
+                        .overlay(Circle().strokeBorder(severityColor.opacity(0.30), lineWidth: 1))
+                }
 
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(primaryRecommendation(from: result.recommendation))
-                            .font(.headline)
-                            .foregroundColor(.white)
+                VStack(spacing: 5) {
+                    Text(primaryRecommendation(from: result.recommendation))
+                        .font(.headline)
+                        .foregroundColor(.white)
+                        .multilineTextAlignment(.center)
 
-                        if hasSecondaryRecommendation(result.recommendation) {
-                            Text(secondaryRecommendation(from: result.recommendation))
-                                .font(.subheadline.weight(.medium))
-                                .foregroundColor(.white.opacity(0.6))
-                        }
+                    if hasSecondaryRecommendation(result.recommendation) {
+                        Text(secondaryRecommendation(from: result.recommendation))
+                            .font(.subheadline.weight(.medium))
+                            .foregroundColor(.white.opacity(0.62))
+                            .multilineTextAlignment(.center)
                     }
-
-                    Spacer(minLength: 0)
                 }
 
                 SeverityBar(color: severityColor, maxWidth: .infinity)
             }
             .padding(20)
+            .frame(maxWidth: .infinity)
+            .overlay(alignment: .topTrailing) {
+                ResetButton(accentColor: .fleischnerAccent) {
+                    highRiskSmokingHistory = false
+                    highRiskExposure = false
+                    highRiskFamilyHistory = false
+                    viewModel.reset()
+                    viewModel.calculate()
+                }
+                .padding(12)
+            }
             .cardStyle()
             .padding(.horizontal, 16)
             .accessibilityElement(children: .ignore)
@@ -206,13 +233,11 @@ struct FleischnerView: View {
         )
     }
 
+    @ViewBuilder
     private var sizeSection: some View {
-        VStack(spacing: 16) {
-            sizeRow
-            axisToggleRow
-            axisRows
-            roundingNote
-        }
+        sizeRow
+        axisToggleRow
+        axisRows
     }
 
     private var sizeRow: some View {
@@ -222,17 +247,14 @@ struct FleischnerView: View {
             onInfoTap: { showSizeInfo = true },
             trailing: {
                 if viewModel.useAxisMeasurements {
-                    HStack(spacing: 6) {
+                    ValueChip(accentColor: .fleischnerAccent) {
                         Text(viewModel.axisMeanDisplay)
                             .foregroundColor(Color.fleischnerAccent)
                         Text("mm")
                             .foregroundColor(.gray)
                     }
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 6)
-                    .background(Color.fleischnerAccent.opacity(0.12), in: Capsule())
                 } else {
-                    HStack(spacing: 6) {
+                    ValueChip(accentColor: .fleischnerAccent) {
                         TextField("0", text: $viewModel.sizeText)
                             .accessibilityIdentifier("fleischner.size")
                             .keyboardType(.decimalPad)
@@ -243,9 +265,6 @@ struct FleischnerView: View {
                         Text("mm")
                             .foregroundColor(.gray)
                     }
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 6)
-                    .background(Color.fleischnerAccent.opacity(0.12), in: Capsule())
                 }
             }
         )
@@ -268,7 +287,7 @@ struct FleischnerView: View {
             SettingsRow(
                 title: "Long axis",
                 trailing: {
-                    HStack(spacing: 6) {
+                    ValueChip(accentColor: .fleischnerAccent) {
                         TextField("0", text: $viewModel.longAxisText)
                             .keyboardType(.decimalPad)
                             .multilineTextAlignment(.trailing)
@@ -278,16 +297,13 @@ struct FleischnerView: View {
                         Text("mm")
                             .foregroundColor(.gray)
                     }
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 6)
-                    .background(Color.fleischnerAccent.opacity(0.12), in: Capsule())
                 }
             )
 
             SettingsRow(
                 title: "Short axis",
                 trailing: {
-                    HStack(spacing: 6) {
+                    ValueChip(accentColor: .fleischnerAccent) {
                         TextField("0", text: $viewModel.shortAxisText)
                             .keyboardType(.decimalPad)
                             .multilineTextAlignment(.trailing)
@@ -297,9 +313,6 @@ struct FleischnerView: View {
                         Text("mm")
                             .foregroundColor(.gray)
                     }
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 6)
-                    .background(Color.fleischnerAccent.opacity(0.12), in: Capsule())
                 }
             )
         }
